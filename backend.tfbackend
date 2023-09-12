@@ -1,0 +1,7 @@
+resource_group_name  = "Test-rg"
+storage_account_name = "safiqstoracc"
+container_name       = "tfstate"
+key                  = "terraform.tfstate"
+#  access_key           = var.ARM_ACCESS_KEY
+
+#run terraform init -backend-config="./backend.tfbackend
