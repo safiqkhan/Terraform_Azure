@@ -1,0 +1,85 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+pool:
+  vmImage: ubuntu-latest
+parameters:
+ - name: execlevel
+   displayName: Execution Level
+   type: string
+   default: create
+   values:
+     - create
+     - read
+     - update
+     - drop
+ - name: var_group
+   displayName: Variable Group Name
+   type: string
+   default: Variable_Group
+ - name: variable
+   displayName: Variable Name
+   type: string
+   default: ENV
+ - name: value
+   displayName: Variable Value 
+   type: string
+   default: TEST
+
+
+stages:
+  - stage: Add_Variables
+    condition: eq ('${{parameters.execlevel}}' , 'create')
+    jobs:
+      - job: Create
+        steps:
+          - task: PowerShell@2
+            displayName: add variables on variable-group 
+            inputs:
+              targetType: 'inline'
+              script: './library_manage.ps1 -VGName ${{ parameters.var_group }} -PAT $(System.AccessToken)'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.SourcesDirectory)'
+              ArtifactName: 'allprojnameid.csv'
+              publishLocation: 'Container'
+  - stage: Read_Variables
+    condition: eq ('${{parameters.execlevel}}' , 'read')
+    jobs:
+      - job: read
+        steps:
+          - task: PowerShell@2
+            displayName: Read variables on variable-group 
+            inputs:
+              targetType: 'inline'
+              script: './library_manage.ps1 -VGName ${{ parameters.var_group }} -PAT $(System.AccessToken) -method Get'
+                 
+  - stage: Update_Variable
+    condition: eq ('${{parameters.execlevel}}' , 'update')
+    jobs:
+      - job: update
+        steps:
+          - task: PowerShell@2
+            displayName: update variables on variable-group 
+            inputs:
+              targetType: 'inline'
+              script: |
+                (Get-Content ./variables.json) -Replace 'Variable1','${{ parameters.variable }}' | Set-Content ./variables.json
+                (Get-Content ./variables.json) -Replace 'Value1','${{ parameters.value }}' | Set-Content ./variables.json
+                ./library_manage.ps1 -VGName ${{ parameters.var_group }} -PAT "$(System.AccessToken)"
+  - stage: Group_Delete
+    condition: eq ('${{parameters.execlevel}}' , 'drop')
+    jobs:
+      - job: drop
+        steps:
+          - task: PowerShell@2
+            displayName: Delete variable-group 
+            inputs:
+              targetType: 'inline'
+              script: './library_manage.ps1 -VGName ${{ parameters.var_group }} -PAT $(System.AccessToken) -method Delete'
+# Reference here
+# https://dev.to/saurabhrai19/how-to-run-powershell-script-from-azure-devops-pipelines-1ngk
+# https://learn.microsoft.com/en-us/rest/api/azure/devops/distributedtask/variablegroups

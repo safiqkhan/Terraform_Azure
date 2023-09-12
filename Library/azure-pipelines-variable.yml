@@ -1,0 +1,136 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+pool:
+  vmImage: ubuntu-latest
+parameters:
+ - name: execlevel
+   displayName: Execution Level
+   type: string
+   default: add
+   values:
+     - create
+     - add
+     - read
+     - update
+     - delete
+     - drop
+ - name: var_group
+   displayName: Variable Group Name
+   type: string
+   default: Variable_Group
+ - name: variable
+   displayName: Variable Name
+   type: string
+   default: ENV
+ - name: value
+   displayName: Variable Value 
+   type: string
+   default: TEST
+ - name: secret
+   displayName: Is Secret? 
+   type: boolean
+   default: false
+
+stages:
+  - stage: Group_Create
+    condition: eq ('${{parameters.execlevel}}' , 'create')
+    jobs:
+      - job: Create
+        steps:
+          - task: AzureCLI@2
+            displayName: 'create variable group'
+            inputs:
+              azureSubscription: 'Free_Trial'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                export AZURE_DEVOPS_EXT_PAT=$(System.AccessToken)
+                az pipelines variable-group create --detect true --authorize true --name ${{ parameters.var_group }} --description "Variables for my Bariable group" --variables ${{ parameters.variable }}=${{ parameters.value }} --output yaml
+  - stage: Add_Variable
+    condition: eq ('${{parameters.execlevel}}' , 'add')
+    jobs:
+      - job: Add
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Add Variables to variable group'
+            inputs:
+              azureSubscription: 'Free_Trial'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                export AZURE_DEVOPS_EXT_PAT=$(System.AccessToken)
+                gr_id=$(az pipelines variable-group list --detect true --group-name ${{ parameters.var_group }} --output table | awk '{ print $1}' | tail -1)
+                az pipelines variable-group variable create --detect true --group-id $gr_id --name ${{ parameters.variable }} --value ${{ parameters.value }} --secret ${{ parameters.secret }} --output table
+  - stage: Read_Variables
+    condition: eq ('${{parameters.execlevel}}' , 'read')
+    jobs:
+      - job: read
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Read Variables from variable group'
+            inputs:
+              azureSubscription: 'Free_Trial'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                export AZURE_DEVOPS_EXT_PAT=$(System.AccessToken)
+                echo "#### List the Variables in Library ####"
+                az pipelines variable-group list --detect true --top 3 --query-order Asc --output table
+                gr_id=$(az pipelines variable-group list --detect true --group-name ${{ parameters.var_group }} --output table | awk '{ print $1}' | tail -1)
+                az pipelines variable-group show --detect true --group-id $gr_id --output yaml
+  - stage: Update_Variable
+    condition: eq ('${{parameters.execlevel}}' , 'update')
+    jobs:
+      - job: update
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Update Variables in variable group'
+            inputs:
+              azureSubscription: 'Free_Trial'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                export AZURE_DEVOPS_EXT_PAT=$(System.AccessToken)
+                gr_id=$(az pipelines variable-group list --detect true --group-name ${{ parameters.var_group }} --output table | awk '{ print $1}' | tail -1)
+                az pipelines variable-group variable update --detect true --group-id $gr_id --name ${{ parameters.variable }} --value ${{ parameters.value }} --secret ${{ parameters.secret }} --output yaml
+  - stage: Delete_Variable
+    condition: eq ('${{parameters.execlevel}}' , 'delete')
+    jobs:
+      - job: delete
+        steps:
+          - task: AzureCLI@2
+            displayName: Delete Variable from Variable Group
+            inputs:
+              azureSubscription: 'Free_Trial'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                export AZURE_DEVOPS_EXT_PAT=$(System.AccessToken)
+                gr_id=$(az pipelines variable-group list --detect true --group-name ${{ parameters.var_group }} --output table | awk '{ print $1}' | tail -1)
+                az pipelines variable-group variable delete --detect true --group-id $gr_id --name ${{ parameters.variable }} --yes
+                
+  - stage: Group_Delete
+    condition: eq ('${{parameters.execlevel}}' , 'drop')
+    jobs:
+      - job: drop
+        steps:
+          - task: AzureCLI@2
+            displayName: Delete Variable Group
+            inputs:
+              azureSubscription: 'Free_Trial'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                export AZURE_DEVOPS_EXT_PAT=$(System.AccessToken)
+                gr_id=$(az pipelines variable-group list --detect true --group-name ${{ parameters.var_group }} --output table | awk '{ print $1}' | tail -1)
+                az pipelines variable-group delete --detect true --group-id $gr_id --yes
+# # Other Possible commands refer here
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=azure-devops-cli#show-details-for-a-variable-group
+# az devops configure --use-git-aliases true
+# az devops configure --defaults organization=$(System.CollectionUri) project=$(System.TeamProject)
+# Below are Update Variable Group Name and Description
+# az pipelines variable-group update --detect true --group-id $gr_id --name Updated-Variables --description "Updated Variables for pipeline" --output table

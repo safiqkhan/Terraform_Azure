@@ -1,0 +1,143 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+variables:
+- group: Terraform_Variable
+# pool:
+#   name: Default
+#   Demands:
+#   - agent.name -equals sfq_win
+pool:
+  vmImage: ubuntu-latest
+parameters:
+#  - name: adminpassword
+#    displayName: Admin_Password
+#    type: string
+#    default:
+ - name: execlevel
+   displayName: Execution Level
+   type: string
+   default: plan
+   values:
+     - plan
+     - apply
+     - destroy
+
+stages:
+  - stage: tfvalidate
+    condition: eq ('${{parameters.execlevel}}' , 'plan')
+    jobs:
+      - job: validate
+        continueOnError: false
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Latest Terraform'
+            inputs:
+              terraformVersion: 'latest'
+          - checkout: self
+            displayName: 'Checkout repository'
+          - task: TerraformCLI@0
+            displayName: 'initialise Terraform'
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              backendType: 'azurerm'
+              backendServiceArm: 'Free_Trial'
+              ensureBackend: true
+              backendAzureRmResourceGroupName: '$(storage_rg_name)'
+              backendAzureRmResourceGroupLocation: '$(location)'
+              backendAzureRmStorageAccountName: '$(storage_account_name)'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'terraform.tfstate'
+          - task: TerraformCLI@0
+            displayName: 'Validate Terraform'
+            inputs:
+              command: 'validate'
+              workingDirectory: '$(Build.SourcesDirectory)'
+          - task: TerraformCLI@0
+            displayName: 'Plan Terraform'
+            inputs:
+              command: 'plan'
+              environmentServiceName: 'Free_Trial'
+              commandOptions: '-var admin_password=$(adminpassword) -var resource_group_name=$(resource_group_name) -out=terraform.tfplan'
+              publishPlanResults: 'Terraform_plan'
+
+  - stage: tfimport
+    condition: eq ('${{parameters.execlevel}}' , 'apply')
+    dependsOn: tfvalidate
+    jobs:
+     - job: import
+       continueOnError: false
+       steps:
+          - task: TerraformCLI@0
+            displayName: 'initialise Terraform'
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              backendType: 'azurerm'
+              backendServiceArm: 'Free_Trial'
+              backendAzureRmResourceGroupName: '$(storage_rg_name)'
+              backendAzureRmResourceGroupLocation: '$(location)'
+              backendAzureRmStorageAccountName: '$(storage_account_name)'
+          - task: TerraformCLI@0
+            displayName: 'Import Terraform'
+            inputs:
+              command: 'import'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              environmentServiceName: 'Free_Trial'
+              resourceAddress: 'azurerm_resource_group.rg'
+              resourceId: '/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/$(resource_group_name)'
+
+  - stage: tfdeploy
+    condition: eq ('${{parameters.execlevel}}' , 'apply')
+    dependsOn: 
+    - tfimport
+    jobs:
+     - job: apply
+       continueOnError: false
+       steps:
+         
+          - task: TerraformCLI@0
+            displayName: 'initialise Terraform'
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              backendType: 'azurerm'
+              backendServiceArm: 'Free_Trial'
+              backendAzureRmResourceGroupName: '$(storage_rg_name)'
+              backendAzureRmStorageAccountName: '$(storage_account_name)'
+          - task: TerraformCLI@0
+            displayName: 'Apply Terraform'
+            inputs:
+              command: 'apply'
+              environmentServiceName: 'Free_Trial'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              commandOptions: '-var admin_password=$(adminpassword) -var resource_group_name=$(resource_group_name)'
+  - stage: tfdestroy
+    condition: eq ('${{parameters.execlevel}}' , 'destroy')
+    jobs:
+     - job: destroy
+       steps:
+          - task: TerraformCLI@0
+            displayName: 'initialise Terraform'
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              backendType: 'azurerm'
+              backendServiceArm: 'Free_Trial'
+              backendAzureRmResourceGroupName: '$(storage_rg_name)'
+              backendAzureRmStorageAccountName: '$(storage_account_name)'
+          - task: TerraformCLI@0
+            displayName: 'destroy Terraform'
+            inputs:
+              command: 'destroy'
+              environmentServiceName: 'Free_Trial'
+              workingDirectory: '$(Build.SourcesDirectory)'

@@ -1,0 +1,69 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+variables:
+- group: Terraform_Variable
+parameters:
+ - name: execlevel
+   displayName: Execution Level
+   type: string
+   default: apply
+   values:
+     - plan
+     - apply
+# pool:
+#   name: Default
+#   Demands:
+#   - agent.name -equals sfq_win
+pool:
+  vmImage: ubuntu-latest
+stages:
+  - stage: tfvalidate
+    condition: eq ('${{parameters.execlevel}}' , 'plan')
+    jobs:
+      - job: validate
+        continueOnError: false
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformCLI@0
+            displayName: 'Initialise Terraform'
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+          - task: TerraformCLI@0
+            displayName: 'Validate Terraform'
+            inputs:
+              command: 'validate'
+              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+          - task: TerraformCLI@0
+            displayName: 'Plan Terraform'
+            inputs:
+              command: 'plan'
+              environmentServiceName: 'Free_Trial'
+              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+              commandOptions: '-var resource_group_name=$(storage_rg_name) -var storage_account_name=$(storage_account_name)'
+  - stage: tfdeploy
+    condition: eq ('${{parameters.execlevel}}' , 'apply')
+    dependsOn: tfvalidate
+    jobs:
+      - job: apply
+        steps:
+          - task: TerraformCLI@0
+            displayName: 'Initialise Terraform'
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+          - task: TerraformCLI@0
+            displayName: 'Apply Terraform'
+            inputs:
+              command: 'apply'
+              environmentServiceName: 'Free_Trial'
+              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+              commandOptions: '-var resource_group_name=$(storage_rg_name) -var storage_account_name=$(storage_account_name)'
+              publishPlanResults: 'Terraform_plan'
