@@ -10,7 +10,7 @@ parameters:
  - name: execlevel
    displayName: Execution Level
    type: string
-   default: add
+   default: read
    values:
      - create
      - add
@@ -25,7 +25,7 @@ parameters:
  - name: variable
    displayName: Variable Name
    type: string
-   default: ENV
+   default: Variable1
  - name: value
    displayName: Variable Value 
    type: string
@@ -49,7 +49,7 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: |
                 export AZURE_DEVOPS_EXT_PAT=$(System.AccessToken)
-                az pipelines variable-group create --detect true --authorize true --name ${{ parameters.var_group }} --description "Variables for my Bariable group" --variables ${{ parameters.variable }}=${{ parameters.value }} --output yaml
+                az pipelines variable-group create --detect true --authorize true --name ${{ parameters.var_group }} --description "Variables for my Variable group" --variables ${{ parameters.variable }}=${{ parameters.value }} --output yaml
   - stage: Add_Variable
     condition: eq ('${{parameters.execlevel}}' , 'add')
     jobs:
@@ -65,13 +65,13 @@ stages:
                 export AZURE_DEVOPS_EXT_PAT=$(System.AccessToken)
                 gr_id=$(az pipelines variable-group list --detect true --group-name ${{ parameters.var_group }} --output table | awk '{ print $1}' | tail -1)
                 az pipelines variable-group variable create --detect true --group-id $gr_id --name ${{ parameters.variable }} --value ${{ parameters.value }} --secret ${{ parameters.secret }} --output table
-  - stage: Read_Variables
+  - stage: Read_Variable
     condition: eq ('${{parameters.execlevel}}' , 'read')
     jobs:
       - job: read
         steps:
           - task: AzureCLI@2
-            displayName: 'Read Variables from variable group'
+            displayName: 'Read variable'
             inputs:
               azureSubscription: 'Free_Trial'
               scriptType: 'bash'
@@ -81,7 +81,8 @@ stages:
                 echo "#### List the Variables in Library ####"
                 az pipelines variable-group list --detect true --top 3 --query-order Asc --output table
                 gr_id=$(az pipelines variable-group list --detect true --group-name ${{ parameters.var_group }} --output table | awk '{ print $1}' | tail -1)
-                az pipelines variable-group show --detect true --group-id $gr_id --output yaml
+                variable=$(az pipelines variable-group show --detect true --group-id $gr_id --output json | jq -cr '.variables."${{ parameters.variable }}".value')
+                echo -e ${{ parameters.var_group }} "Conatins Variable name-"${{ parameters.variable }} "with value is \n "${variable}
   - stage: Update_Variable
     condition: eq ('${{parameters.execlevel}}' , 'update')
     jobs:
@@ -134,3 +135,4 @@ stages:
 # az devops configure --defaults organization=$(System.CollectionUri) project=$(System.TeamProject)
 # Below are Update Variable Group Name and Description
 # az pipelines variable-group update --detect true --group-id $gr_id --name Updated-Variables --description "Updated Variables for pipeline" --output table
+#az pipelines variable-group variable update --detect true --group-id $gr_id --new-name ${{ parameters.new_variable }} --name ${{ parameters.variable }} --value ${{ parameters.value }} --secret ${{ parameters.secret }} --output yaml
