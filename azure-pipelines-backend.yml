@@ -35,18 +35,18 @@ stages:
             displayName: 'Initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+              workingDirectory: '$(Build.SourcesDirectory)/backend'
           - task: TerraformCLI@0
             displayName: 'Validate Terraform'
             inputs:
               command: 'validate'
-              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+              workingDirectory: '$(Build.SourcesDirectory)/backend'
           - task: TerraformCLI@0
             displayName: 'Plan Terraform'
             inputs:
               command: 'plan'
               environmentServiceName: 'Free_Trial'
-              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+              workingDirectory: '$(Build.SourcesDirectory)/backend'
               commandOptions: '-var resource_group_name=$(storage_rg_name) -var storage_account_name=$(storage_account_name)'
   - stage: tfdeploy
     condition: eq ('${{parameters.execlevel}}' , 'apply')
@@ -58,12 +58,12 @@ stages:
             displayName: 'Initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+              workingDirectory: '$(Build.SourcesDirectory)/backend'
           - task: TerraformCLI@0
             displayName: 'Apply Terraform'
             inputs:
               command: 'apply'
               environmentServiceName: 'Free_Trial'
-              workingDirectory: '$(Build.SourcesDirectory)/modules/storage/'
+              workingDirectory: '$(Build.SourcesDirectory)/backend
               commandOptions: '-var resource_group_name=$(storage_rg_name) -var storage_account_name=$(storage_account_name)'
               publishPlanResults: 'Terraform_plan'
