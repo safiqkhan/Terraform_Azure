@@ -11,7 +11,7 @@ variable "location" {
 variable "vm_name" {
   description = "Name of the virtual machine."
   type        = string
-  default     = "Win-vm"
+  default     = "linux-vm"
 }
 variable "network_interface_ids" {
   description = "network interface id of virtual machine."
@@ -22,9 +22,4 @@ variable "admin_username" {
   description = "Admin username for the virtual machine."
   type        = string
   default     = "Adminuser"
-}
-
-variable "admin_password" {
-  description = "Admin password for the virtual machine."
-  type        = string
 }

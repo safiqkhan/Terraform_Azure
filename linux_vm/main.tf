@@ -5,23 +5,21 @@ provider "azurerm" {
     }
   }
 }
+
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.location
 }
-
 module "vnetwork" {
-  source              = "./modules/vnetwork"
+  source              = "../modules/vnetwork"
   resource_group_name = var.resource_group_name
   location            = var.location
 }
-
-module "windows_vm" {
-  source                = "./modules/windows_vm"
+module "linux_vm" {
+  source                = "../modules/linux_vm"
   resource_group_name   = var.resource_group_name
   location              = var.location
-  vm_name               = var.vm_name
+  vm_name               = "linux-vm"
   network_interface_ids = [module.vnetwork.nic_id]
   admin_username        = "Adminuser"
-  admin_password        = var.admin_password
 }

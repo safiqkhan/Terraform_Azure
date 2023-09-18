@@ -30,6 +30,13 @@ parameters:
      - plan
      - apply
      - destroy
+ - name: platform
+   displayName: Platform deploy
+   type: boolean
+   default: linux
+   values:
+     - linux
+     - windows
 
 stages:
   - stage: tfvalidate
@@ -48,7 +55,7 @@ stages:
             displayName: 'initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)'
+              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
               backendType: 'azurerm'
               backendServiceArm: 'Free_Trial'
               ensureBackend: true
@@ -61,7 +68,7 @@ stages:
             displayName: 'Validate Terraform'
             inputs:
               command: 'validate'
-              workingDirectory: '$(Build.SourcesDirectory)'
+              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
           - task: TerraformCLI@0
             displayName: 'Plan Terraform'
             inputs:
@@ -81,7 +88,7 @@ stages:
             displayName: 'initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)'
+              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
               backendType: 'azurerm'
               backendServiceArm: 'Free_Trial'
               backendAzureRmResourceGroupName: '$(storage_rg_name)'
@@ -91,7 +98,7 @@ stages:
             displayName: 'Import Terraform'
             inputs:
               command: 'import'
-              workingDirectory: '$(Build.SourcesDirectory)'
+              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
               environmentServiceName: 'Free_Trial'
               resourceAddress: 'azurerm_resource_group.rg'
               resourceId: '/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/$(resource_group_name)'
@@ -109,7 +116,7 @@ stages:
             displayName: 'initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)'
+              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
               backendType: 'azurerm'
               backendServiceArm: 'Free_Trial'
               backendAzureRmResourceGroupName: '$(storage_rg_name)'
@@ -119,7 +126,7 @@ stages:
             inputs:
               command: 'apply'
               environmentServiceName: 'Free_Trial'
-              workingDirectory: '$(Build.SourcesDirectory)'
+              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
               commandOptions: '-var admin_password=$(adminpassword) -var resource_group_name=$(resource_group_name)'
   - stage: tfdestroy
     condition: eq ('${{parameters.execlevel}}' , 'destroy')
@@ -130,7 +137,7 @@ stages:
             displayName: 'initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)'
+              workingDirectory: '$(Build.SourcesDirectory)/linux_vm'
               backendType: 'azurerm'
               backendServiceArm: 'Free_Trial'
               backendAzureRmResourceGroupName: '$(storage_rg_name)'
@@ -140,4 +147,4 @@ stages:
             inputs:
               command: 'destroy'
               environmentServiceName: 'Free_Trial'
-              workingDirectory: '$(Build.SourcesDirectory)'
+              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
