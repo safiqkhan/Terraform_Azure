@@ -11,9 +11,11 @@ resource "azurerm_linux_virtual_machine" "vm" {
   location              = var.location
   resource_group_name   = var.resource_group_name
   network_interface_ids = var.network_interface_ids
-  size                  = "Standard_B1s"
+  # size                  = "Standard_B1s"
+  size                  = "Standard_F4s"
   admin_username = var.admin_username
-  custom_data = filebase64("customdata.tpl")
+  custom_data = filebase64("customdata.sh")
+  # review cloud-init logs at /var/log/cloud-init.log
   # admin_ssh_key {
   #   username   = var.admin_username
   #   public_key = tls_private_key.key.public_key_openssh
@@ -26,13 +28,19 @@ resource "azurerm_linux_virtual_machine" "vm" {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
-
   source_image_reference {
-    publisher = "RedHat"
-    offer     = "RHEL"
-    sku       = "8-lvm-gen2"
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
+  # source_image_reference {
+  #   publisher = "RedHat"
+  #   offer     = "RHEL"
+  #   sku       = "8-lvm-gen2"
+  #   version   = "latest"
+  # }
+
   # depends_on = [ tls_private_key.key ]
   # provisioner "remote-exec" {
   #   inline = [

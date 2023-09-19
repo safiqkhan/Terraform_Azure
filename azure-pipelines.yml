@@ -53,6 +53,7 @@ stages:
             displayName: 'Checkout repository'
           - task: TerraformCLI@0
             displayName: 'initialise Terraform'
+            timeoutInMinutes: 3
             inputs:
               command: 'init'
               workingDirectory: '$(Build.SourcesDirectory)'
@@ -77,39 +78,10 @@ stages:
               commandOptions: '--target=module.${{ parameters.platform }}_vm -var resource_group_name=$(resource_group_name) -out=terraform.tfplan'
               publishPlanResults: 'Terraform_plan'
 
-  - stage: tfimport
-    condition: eq ('${{parameters.execlevel}}' , 'apply')
-    dependsOn: tfvalidate
-    jobs:
-     - job: import
-       continueOnError: false
-       steps:
-          - task: TerraformCLI@0
-            displayName: 'initialise Terraform'
-            inputs:
-              command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)'
-              backendType: 'azurerm'
-              backendServiceArm: 'Free_Trial'
-              backendAzureRmResourceGroupName: '$(storage_rg_name)'
-              backendAzureRmResourceGroupLocation: '$(location)'
-              backendAzureRmStorageAccountName: '$(storage_account_name)'
-          - task: TerraformCLI@0
-            displayName: 'Import Terraform'
-            inputs:
-              command: 'import'
-              workingDirectory: '$(Build.SourcesDirectory)'
-              environmentServiceName: 'Free_Trial'
-              resourceAddress: 'azurerm_resource_group.rg'
-              resourceId: '/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/$(resource_group_name)'
-
   - stage: tfdeploy
     condition: eq ('${{parameters.execlevel}}' , 'apply')
-    dependsOn: 
-    - tfimport
     jobs:
      - job: apply
-       continueOnError: false
        steps:
          
           - task: TerraformCLI@0
@@ -122,12 +94,36 @@ stages:
               backendAzureRmResourceGroupName: '$(storage_rg_name)'
               backendAzureRmStorageAccountName: '$(storage_account_name)'
           - task: TerraformCLI@0
+            displayName: 'Plan Terraform'
+            inputs:
+              command: 'plan'
+              environmentServiceName: 'Free_Trial'
+              commandOptions: '--target=module.${{ parameters.platform }}_vm -var resource_group_name=$(resource_group_name) -out=terraform.tfplan'
+              publishPlanResults: 'Terraform_plan'
+          - task: TerraformCLI@0
+            displayName: 'Import Terraform'
+            continueOnError: true
+            inputs:
+              command: 'import'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              environmentServiceName: 'Free_Trial'
+              resourceAddress: 'azurerm_resource_group.rg'
+              resourceId: '/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/$(resource_group_name)-rg'
+
+          - task: TerraformCLI@0
             displayName: 'Apply Terraform'
+            timeoutInMinutes: 6
             inputs:
               command: 'apply'
               environmentServiceName: 'Free_Trial'
               workingDirectory: '$(Build.SourcesDirectory)'
               commandOptions: '--target=module.${{ parameters.platform }}_vm -var resource_group_name=$(resource_group_name)'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.SourcesDirectory)'
+              ArtifactName: 'azuredata'
+              publishLocation: 'Container'
+            
   - stage: tfdestroy
     condition: eq ('${{parameters.execlevel}}' , 'destroy')
     jobs:
@@ -144,6 +140,7 @@ stages:
               backendAzureRmStorageAccountName: '$(storage_account_name)'
           - task: TerraformCLI@0
             displayName: 'destroy Terraform'
+            timeoutInMinutes: 6
             inputs:
               command: 'destroy'
               environmentServiceName: 'Free_Trial'

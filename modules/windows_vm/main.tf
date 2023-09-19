@@ -5,8 +5,9 @@ resource "azurerm_windows_virtual_machine" "vm" {
   location              = var.location
   resource_group_name   = var.resource_group_name
   network_interface_ids = var.network_interface_ids
-  #size = "Standard_DS1_v2"
-  size = "Standard_B1s"
+  size = "Standard_F4s"
+  # size = "Standard_B1s"
+  
 
 # get from - az vm image list --offer windowsserver --output table
   source_image_reference {
