@@ -1,9 +1,15 @@
-output "vm_id" {
-  value = azurerm_windows_virtual_machine.vm.id
+output "vm_name" {
+  value = azurerm_windows_virtual_machine.vm.name
 }
 output "public_ip" {
   value = azurerm_windows_virtual_machine.vm.public_ip_address
 }
 output "private_ip" {
   value = azurerm_windows_virtual_machine.vm.private_ip_address
+}
+output "admin_username" {
+  value = azurerm_windows_virtual_machine.vm.admin_username
+}
+output "admin_password" {
+  value = azurerm_windows_virtual_machine.vm.admin_password
 }

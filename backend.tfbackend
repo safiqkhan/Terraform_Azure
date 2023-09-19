@@ -1,4 +1,4 @@
-resource_group_name  = "Test-rg"
+ource_group_name  = "Test-rg"
 storage_account_name = "safiqstoracc"
 container_name       = "tfstate"
 key                  = "terraform.tfstate"

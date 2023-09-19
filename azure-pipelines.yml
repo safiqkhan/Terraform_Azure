@@ -32,7 +32,7 @@ parameters:
      - destroy
  - name: platform
    displayName: Platform deploy
-   type: boolean
+   type: string
    default: linux
    values:
      - linux
@@ -55,7 +55,7 @@ stages:
             displayName: 'initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
+              workingDirectory: '$(Build.SourcesDirectory)'
               backendType: 'azurerm'
               backendServiceArm: 'Free_Trial'
               ensureBackend: true
@@ -68,13 +68,13 @@ stages:
             displayName: 'Validate Terraform'
             inputs:
               command: 'validate'
-              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
+              workingDirectory: '$(Build.SourcesDirectory)'
           - task: TerraformCLI@0
             displayName: 'Plan Terraform'
             inputs:
               command: 'plan'
               environmentServiceName: 'Free_Trial'
-              commandOptions: '-var admin_password=$(adminpassword) -var resource_group_name=$(resource_group_name) -out=terraform.tfplan'
+              commandOptions: '--target=module.${{ parameters.platform }}_vm -var resource_group_name=$(resource_group_name) -out=terraform.tfplan'
               publishPlanResults: 'Terraform_plan'
 
   - stage: tfimport
@@ -88,7 +88,7 @@ stages:
             displayName: 'initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
+              workingDirectory: '$(Build.SourcesDirectory)'
               backendType: 'azurerm'
               backendServiceArm: 'Free_Trial'
               backendAzureRmResourceGroupName: '$(storage_rg_name)'
@@ -98,7 +98,7 @@ stages:
             displayName: 'Import Terraform'
             inputs:
               command: 'import'
-              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
+              workingDirectory: '$(Build.SourcesDirectory)'
               environmentServiceName: 'Free_Trial'
               resourceAddress: 'azurerm_resource_group.rg'
               resourceId: '/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/$(resource_group_name)'
@@ -116,7 +116,7 @@ stages:
             displayName: 'initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
+              workingDirectory: '$(Build.SourcesDirectory)'
               backendType: 'azurerm'
               backendServiceArm: 'Free_Trial'
               backendAzureRmResourceGroupName: '$(storage_rg_name)'
@@ -126,8 +126,8 @@ stages:
             inputs:
               command: 'apply'
               environmentServiceName: 'Free_Trial'
-              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
-              commandOptions: '-var admin_password=$(adminpassword) -var resource_group_name=$(resource_group_name)'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              commandOptions: '--target=module.${{ parameters.platform }}_vm -var resource_group_name=$(resource_group_name)'
   - stage: tfdestroy
     condition: eq ('${{parameters.execlevel}}' , 'destroy')
     jobs:
@@ -137,7 +137,7 @@ stages:
             displayName: 'initialise Terraform'
             inputs:
               command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)/linux_vm'
+              workingDirectory: '$(Build.SourcesDirectory)'
               backendType: 'azurerm'
               backendServiceArm: 'Free_Trial'
               backendAzureRmResourceGroupName: '$(storage_rg_name)'
@@ -147,4 +147,5 @@ stages:
             inputs:
               command: 'destroy'
               environmentServiceName: 'Free_Trial'
-              workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.platform }}'
+              workingDirectory: '$(Build.SourcesDirectory)'
+              commandOptions: '--target=module.${{ parameters.platform }}_vm'
