@@ -20,7 +20,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   # }
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file("~/.ssh/azurekey.pub")
+    public_key = file("azurekey.pub")
   }
   os_disk {
     caching              = "ReadWrite"
