@@ -29,9 +29,9 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   source_image_reference {
     publisher = "RedHat"
-    offer     = "RHEL-SAP-HA"
-    sku       = "8.2"
-    version   = "8.2.2021091201"
+    offer     = "RHEL"
+    sku       = "8-lvm-gen2"
+    version   = "latest"
   }
   # depends_on = [ tls_private_key.key ]
   # provisioner "remote-exec" {

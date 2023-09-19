@@ -1,4 +1,5 @@
 #!/bin/bash
+sudo yum update -y
 sudo yum install -y curl policycoreutils-python openssh-server 2>&1 /dev/null
 sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc 
 sudo yum install azure-cli 
