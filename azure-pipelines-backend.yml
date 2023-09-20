@@ -20,7 +20,7 @@ parameters:
  - name: execlevel
    displayName: Execution Level
    type: string
-   default: apply
+   default: plan
    values:
      - plan
      - apply
