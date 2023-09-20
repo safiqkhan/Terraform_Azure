@@ -41,7 +41,6 @@ stages:
             displayName: 'Install Terraform'
             inputs:
               terraformVersion: 'latest'
-          - checkout: githubrepo
           - task: TerraformCLI@0
             displayName: 'Initialise Terraform'
             inputs:
@@ -65,6 +64,7 @@ stages:
     jobs:
       - job: apply
         steps:
+          - checkout: githubrepo
           - task: TerraformCLI@0
             displayName: 'Initialise Terraform'
             inputs:
