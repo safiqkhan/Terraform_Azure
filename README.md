@@ -4,3 +4,4 @@ Terraform_vm_automation status
 <p align="left"> <img src="GET https://dev.azure.com/safiquddinkhan/onestop/_apis/build/status/Terraform_vm_automation?branchname=master" alt="Terraform_backend" /> </p>
 Get https://dev.azure.com/safiquddinkhan/onestop/_apis/build/status/Terraform_vm_automation?branchname=master
 
+[![Build Status](https://dev.azure.com/safiquddinkhan/onestop/_apis/build/status/Terraform_vm_automation?branchname=master)](https://dev.azure.com/safiquddinkhan/onestop/_apis/build/status/Terraform_vm_automation?branchname=master)
