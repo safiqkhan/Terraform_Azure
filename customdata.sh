@@ -1,8 +1,9 @@
 #!/bin/sh
 exec 2>/dev/null
 sudo apt update -y
-# sudo apt upgrade -y
-sudo apt install -y azure-cli
+sudo dpkg --configure -a
+sudo apt upgrade -y
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 sudo apt install -y curl openssh-server ca-certificates postfix
 curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | sudo bash
