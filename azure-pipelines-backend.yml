@@ -7,7 +7,7 @@ pool:
 trigger:
   branches:
     include:
-      - main
+      - master
 variables:
 - group: Terraform_Variable
 resources:
