@@ -1,4 +1,5 @@
 Azure Pipeline status
-
-[![Build Status](https://dev.azure.com/safiquddinkhan/onestop/_apis/build/status%2FTerraform_Backend?repoName=safiqkhan%2FTerraform_Azure&branchName=master)](https://dev.azure.com/safiquddinkhan/onestop/_build/latest?definitionId=15&repoName=safiqkhan%2FTerraform_Azure&branchName=master)
-
+Terraform_Backend Status
+GET https://dev.azure.com/safiquddinkhan/onestop/_apis/build/status/Terraform_Backend?branchname=master
+Terraform_vm_automation status 
+GET https://dev.azure.com/safiquddinkhan/onestop/_apis/build/status/Terraform_vm_automation?branchname=master
