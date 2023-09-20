@@ -14,7 +14,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   # size                  = "Standard_B1s"
   size                  = "Standard_F4s"
   admin_username = var.admin_username
-  // custom_data = filebase64("customdata.sh")
+  custom_data = filebase64("customdata.sh")
   # review cloud-init logs at /var/log/cloud-init.log
   admin_ssh_key {
      username   = var.admin_username
@@ -41,20 +41,20 @@ resource "azurerm_linux_virtual_machine" "vm" {
   #   sku       = "8-lvm-gen2"
   #   version   = "latest"
   # }
-  provisioner "file" {
-    source      = "customdata.sh"    # Local path to your script
-    destination = "/tmp/script.sh"  # Destination path on the VM
-  }
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /tmp/script.sh",
-      "/tmp/script.sh > /tmp/log.txt 2>&1",  # Run the script and capture output in log
-    ]
-  }
-  connection {
-    type        = "ssh"
-    host        = self.public_ip_address
-    user        = var.admin_username
-    private_key = tls_private_key.key.private_key_pem
-  }
+  // provisioner "file" {
+  //   source      = "customdata.sh"    # Local path to your script
+  //   destination = "/tmp/script.sh"  # Destination path on the VM
+  // }
+  // provisioner "remote-exec" {
+  //   inline = [
+  //     "chmod +x /tmp/script.sh",
+  //     "/tmp/script.sh > /tmp/log.txt 2>&1",  # Run the script and capture output in log
+  //   ]
+  // }
+  // connection {
+  //   type        = "ssh"
+  //   host        = self.public_ip_address
+  //   user        = var.admin_username
+  //   private_key = tls_private_key.key.private_key_pem
+  // }
 }
