@@ -60,7 +60,7 @@ stages:
     jobs:
       - job: apply
         steps:
-          - checkout: githubrepo
+          - checkout: safiqkhan/Terraform_Azure
           - task: TerraformCLI@0
             displayName: 'Initialise Terraform'
             inputs:
