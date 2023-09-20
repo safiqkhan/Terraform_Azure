@@ -25,7 +25,6 @@ stages:
     condition: eq ('${{parameters.execlevel}}' , 'plan')
     jobs:
       - job: validate
-        continueOnError: false
         steps:
           - task: TerraformInstaller@0
             displayName: 'Install Terraform'
