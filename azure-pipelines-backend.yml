@@ -4,7 +4,10 @@
 #   - agent.name -equals sfq_win
 pool:
   vmImage: ubuntu-latest
-
+trigger:
+  branches:
+    include:
+      - main
 variables:
 - group: Terraform_Variable
 resources:
@@ -29,9 +32,9 @@ stages:
     condition: eq ('${{parameters.execlevel}}' , 'plan')
     jobs:
       - job: validate
+        continueOnError: false
         steps:
-          - checkout: self
-            
+          - checkout: githubrepo
           - task: TerraformInstaller@0
             displayName: 'Install Terraform'
             inputs:
@@ -65,14 +68,6 @@ stages:
             inputs:
               command: 'init'
               workingDirectory: '$(Build.SourcesDirectory)/backend'
-          # - task: TerraformCLI@0
-          #   displayName: 'Import Terraform'
-          #   inputs:
-          #     command: 'import'
-          #     workingDirectory: '$(Build.SourcesDirectory)/backend'
-          #     environmentServiceName: 'Free_Trial'
-          #     resourceAddress: 'azurerm_resource_group.rg'
-          #     resourceId: '/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/$(storage_account_name)'
           - task: TerraformCLI@0
             displayName: 'Apply Terraform'
             inputs:
@@ -81,4 +76,5 @@ stages:
               workingDirectory: '$(Build.SourcesDirectory)/backend'
               commandOptions: '-var resource_group_name=$(storage_rg_name) -var storage_account_name=$(storage_account_name)'
               publishPlanResults: 'Terraform_plan'
+          
           
