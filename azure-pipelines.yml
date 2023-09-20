@@ -10,6 +10,10 @@
 pool:
   vmImage: ubuntu-latest
 trigger: none
+pr:
+  branches:
+    include:
+      - '*'
 variables:
 - group: Terraform_Variable
 # pool:
