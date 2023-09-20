@@ -5,7 +5,7 @@ LOG_FILE="gitlab.log"
 rm -rf $LOG_FILE
 # Function to add timestamps to log messages
 log() {
-  echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> "LOG_FILE"
+  echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> $LOG_FILE
 }
 #exec > >(tee -a "LOG_FILE") 2>&1
 # Redirect stdout and stderr to a log file
