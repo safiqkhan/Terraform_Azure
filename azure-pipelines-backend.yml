@@ -4,7 +4,7 @@
 #   - agent.name -equals sfq_win
 pool:
   vmImage: ubuntu-latest
-trigger: none
+
 variables:
 - group: Terraform_Variable
 resources:
@@ -59,7 +59,7 @@ stages:
     jobs:
       - job: apply
         steps:
-          - checkout: safiqkhan/Terraform_Azure
+          - checkout: githubrepo
           - task: TerraformCLI@0
             displayName: 'Initialise Terraform'
             inputs:
