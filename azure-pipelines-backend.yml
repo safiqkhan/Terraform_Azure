@@ -62,7 +62,7 @@ stages:
     jobs:
       - job: apply
         steps:
-          - checkout: githubrepo
+          # - checkout: githubrepo
           - task: TerraformCLI@0
             displayName: 'Initialise Terraform'
             inputs:
