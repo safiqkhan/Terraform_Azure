@@ -59,6 +59,14 @@ stages:
             inputs:
               command: 'init'
               workingDirectory: '$(Build.SourcesDirectory)/backend'
+          # - task: TerraformCLI@0
+          #   displayName: 'Import Terraform'
+          #   inputs:
+          #     command: 'import'
+          #     workingDirectory: '$(Build.SourcesDirectory)/backend'
+          #     environmentServiceName: 'Free_Trial'
+          #     resourceAddress: 'azurerm_resource_group.rg'
+          #     resourceId: '/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/$(storage_account_name)'
           - task: TerraformCLI@0
             displayName: 'Apply Terraform'
             inputs:

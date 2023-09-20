@@ -12,7 +12,7 @@ output "windows_vm_public_ip" {
 }
 output "windows_vm_password" {
   sensitive = true
-  value = module.windows_vm.admin_password
+  value     = module.windows_vm.admin_password
 }
 output "linux_vm_name" {
   value = module.linux_vm.vm_name

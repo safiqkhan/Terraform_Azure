@@ -8,7 +8,7 @@ provider "azurerm" {
 #   upper   = false
 # }
 
-resource "azurerm_resource_group" "tfstate" {
+resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.location
 }
@@ -16,8 +16,8 @@ resource "azurerm_resource_group" "tfstate" {
 resource "azurerm_storage_account" "tfstate" {
 #   name                     = "tfstate${random_string.resource_code.result}"
   name                     = var.storage_account_name
-  resource_group_name      = azurerm_resource_group.tfstate.name
-  location                 = azurerm_resource_group.tfstate.location
+  resource_group_name      = azurerm_resource_group.rg.name
+  location                 = azurerm_resource_group.rg.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
   allow_nested_items_to_be_public = false
