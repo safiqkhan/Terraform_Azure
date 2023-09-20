@@ -1,11 +1,11 @@
-# resource "tls_private_key" "key" {
-#   algorithm   = "RSA"
-#   rsa_bits    = 4096
-# }
-# resource "local_file" "azurekey" {
-#   filename = "azurekey.pem"
-#   content = tls_private_key.key.private_key_pem
-# }
+ resource "tls_private_key" "key" {
+   algorithm   = "RSA"
+   rsa_bits    = 4096
+ }
+ resource "local_file" "azurekey" {
+   filename = "azurekey.pem"
+   content = tls_private_key.key.private_key_pem
+ }
 resource "azurerm_linux_virtual_machine" "vm" {
   name                  = var.vm_name
   location              = var.location
@@ -16,14 +16,14 @@ resource "azurerm_linux_virtual_machine" "vm" {
   admin_username = var.admin_username
   custom_data = filebase64("customdata.sh")
   # review cloud-init logs at /var/log/cloud-init.log
-  # admin_ssh_key {
-  #   username   = var.admin_username
-  #   public_key = tls_private_key.key.public_key_openssh
-  # }
   admin_ssh_key {
-    username   = var.admin_username
-    public_key = file("azurekey.pub")
+     username   = var.admin_username
+     public_key = tls_private_key.key.public_key_openssh
   }
+  // admin_ssh_key {
+  //   username   = var.admin_username
+  //   public_key = file("azurekey.pub")
+  // }
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
@@ -34,14 +34,13 @@ resource "azurerm_linux_virtual_machine" "vm" {
     sku       = "22_04-lts-gen2"
     version   = "latest"
   }
+  depends_on = [ tls_private_key.key ]
   # source_image_reference {
   #   publisher = "RedHat"
   #   offer     = "RHEL"
   #   sku       = "8-lvm-gen2"
   #   version   = "latest"
   # }
-
-  # depends_on = [ tls_private_key.key ]
   # provisioner "remote-exec" {
   #   inline = [
   #     "sudo yum install -y curl policycoreutils-python openssh-server 2>&1 /dev/null",
