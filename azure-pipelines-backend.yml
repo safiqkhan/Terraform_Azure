@@ -29,7 +29,6 @@ stages:
     condition: eq ('${{parameters.execlevel}}' , 'plan')
     jobs:
       - job: validate
-        continueOnError: false
         steps:
           - checkout: self
             
