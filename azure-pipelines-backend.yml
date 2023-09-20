@@ -3,14 +3,23 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger: none
+
 variables:
 - group: Terraform_Variable
+resources:
+ repositories:
+   - repository: githubrepo
+     type: github
+     name: safiqkhan/Terraform_Azure
+     endpoint: github_safiqkhan
+     ref: master
+     trigger: 
+       - master
 parameters:
  - name: execlevel
    displayName: Execution Level
    type: string
-   default: apply
+   default: plan
    values:
      - plan
      - apply
@@ -27,6 +36,8 @@ stages:
       - job: validate
         continueOnError: false
         steps:
+          - checkout: githubrepo
+            
           - task: TerraformInstaller@0
             displayName: 'Install Terraform'
             inputs:
@@ -75,3 +86,4 @@ stages:
               workingDirectory: '$(Build.SourcesDirectory)/backend'
               commandOptions: '-var resource_group_name=$(storage_rg_name) -var storage_account_name=$(storage_account_name)'
               publishPlanResults: 'Terraform_plan'
+          
