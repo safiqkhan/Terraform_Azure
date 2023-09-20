@@ -8,7 +8,7 @@
 #   - agent.name -equals sfq_win
 pool:
   vmImage: ubuntu-latest
-trigger: none
+
 variables:
 - group: Terraform_Variable
 resources:
