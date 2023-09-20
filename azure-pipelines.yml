@@ -37,15 +37,6 @@ parameters:
    values:
      - linux
      - windows
-resources:
- repositories:
-   - repository: githubrepo
-     type: github
-     name: safiqkhan/Terraform_Azure
-     endpoint: github_safiqkhan
-     ref: master
-     trigger: 
-       - master
 stages:
   - stage: tfvalidate
     condition: eq ('${{parameters.execlevel}}' , 'plan')
@@ -53,7 +44,6 @@ stages:
       - job: validate
         continueOnError: false
         steps:
-          - checkout: githubrepo
           - task: TerraformInstaller@0
             displayName: 'Install Latest Terraform'
             inputs:
