@@ -7,7 +7,8 @@
 # Start with a minimal pipeline that you can customize to build and deploy your code.
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
-
+pool:
+  vmImage: ubuntu-latest
 trigger: none
 variables:
 - group: Terraform_Variable
@@ -15,8 +16,6 @@ variables:
 #   name: Default
 #   Demands:
 #   - agent.name -equals sfq_win
-pool:
-  vmImage: ubuntu-latest
 parameters:
 #  - name: adminpassword
 #    displayName: Admin_Password
