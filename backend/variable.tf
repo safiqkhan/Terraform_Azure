@@ -14,5 +14,5 @@ variable "storage_account_name" {
 variable "ARM_ACCESS_KEY" {
   description = "Name of the storage account name."
   type        = string
-  default     = " "
+  default     = "*"
 }
