@@ -1,20 +1,11 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
-trigger: none
+trigger:
+  paths:
+    include:
+      - **.tf
+    exclude:
+      - azure-pipelines-backend.yml
 variables:
 - group: Terraform_Variable
-# pool:
-#   name: Default
-#   Demands:
-#   - agent.name -equals sfq_win
 pool:
   vmImage: ubuntu-latest
 parameters:
@@ -112,17 +103,21 @@ stages:
 
           - task: TerraformCLI@0
             displayName: 'Apply Terraform'
-            timeoutInMinutes: 6
+            continueOnError: true
             inputs:
               command: 'apply'
               environmentServiceName: 'Free_Trial'
               workingDirectory: '$(Build.SourcesDirectory)'
               commandOptions: '--target=module.${{ parameters.platform }}_vm -var resource_group_name=$(resource_group_name)'
+          - task: CopyFiles@2
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)'
+              Contents: '**azurekey.pem'  # Specify the file to copy
+              TargetFolder: '$(Build.ArtifactStagingDirectory)' 
           - task: PublishBuildArtifacts@1
             inputs:
-              PathtoPublish: '$(Build.SourcesDirectory)'
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
               ArtifactName: 'azuredata'
-              publishLocation: 'Container'
             
   - stage: tfdestroy
     condition: eq ('${{parameters.execlevel}}' , 'destroy')
@@ -140,7 +135,7 @@ stages:
               backendAzureRmStorageAccountName: '$(storage_account_name)'
           - task: TerraformCLI@0
             displayName: 'destroy Terraform'
-            timeoutInMinutes: 6
+            timeoutInMinutes: 5
             inputs:
               command: 'destroy'
               environmentServiceName: 'Free_Trial'
