@@ -1,11 +1,17 @@
+
 trigger:
-  paths:
-    include:
-      - **/*.tf
-    exclude:
-      - azure-pipelines-backend.yml
+ paths:
+   include:
+     - '**/*.tf'
+   exclude:
+     - azure-pipelines.yml
+     - azure-pipelines-backend.yml
 variables:
 - group: Terraform_Variable
+# pool:
+#   name: Default
+#   Demands:
+#   - agent.name -equals sfq_win
 pool:
   vmImage: ubuntu-latest
 parameters:
@@ -112,7 +118,7 @@ stages:
           - task: CopyFiles@2
             inputs:
               SourceFolder: '$(Build.SourcesDirectory)'
-              Contents: '**azurekey.pem'  # Specify the file to copy
+              Contents: '**/*.pem'  # Specify the file to copy
               TargetFolder: '$(Build.ArtifactStagingDirectory)' 
           - task: PublishBuildArtifacts@1
             inputs:
