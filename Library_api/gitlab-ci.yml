@@ -43,8 +43,8 @@ execute_operation:
       group_id=$(az pipelines variable-group list --query "[?name=='${var_group}'].id" --output tsv)
       if [ "$OPERATION" == "create" ]; then
         if [ -z "$group_id" ]; then
-          echo "az pipelines variable-group create --authorize false --name ${var_group} --description 'Variables for my Variable group' --variables ${variable}=${value} --output yaml"
-          az pipelines variable-group create --authorize false --name ${var_group} --description "Variables for my Variable group" --variables ${variable}=${value} --output yaml
+          echo "az pipelines variable-group create --authorize true --name ${var_group} --description 'Variables for my Variable group' --variables ${variable}=${value} --output yaml"
+          az pipelines variable-group create --authorize true --name ${var_group} --description "Variables for my Variable group" --variables ${variable}=${value} --output yaml
         else
           echo "z pipelines variable-group variable create --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} --output table"
           az pipelines variable-group variable create --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} --output table
