@@ -12,13 +12,13 @@ variables:
       - "drop"
     description: "Enter Execution policy"
   var_group:
-    value: "Variable_Group"
+    value: "Group"
     description: "Enter Variable Group Name"
   variable:
-    value: "Variable"
+    value: "Location"
     description: "Enter Variable Name"
   value:
-    value: "value"
+    value: "Pune"
     description: "Enter Value Value"
   secret:
     value: "false"
