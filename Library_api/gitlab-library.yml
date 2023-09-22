@@ -17,7 +17,7 @@ variables:
       - "drop"
     description: "Enter Execution policy"
   var_group:
-    value: "UBS"
+    value: "Test"
     description: "Enter Variable Group Name"
   variable:
     value: "Name"
@@ -49,7 +49,7 @@ setup_environment:
       az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop
       echo "export AZURE_DEVOPS_EXT_PAT=${AccessToken}" >> setup.sh
       export AZURE_DEVOPS_EXT_PAT="${AccessToken}"
-      group_id=$(az pipelines variable-group list --query "[?name=='${var_group}'].id" --output tsv)
+      group_id=$(az pipelines variable-group list --query "[?name=='${var_group}'].id" -o tsv)
       echo "group_id=${group_id}" >> setup.sh
   dependencies:
     - "choose_operation"
@@ -64,14 +64,14 @@ create_operation:
       echo "Performing Create operation"
       if [ -z "$group_id" ]; then
         echo "az pipelines variable-group create --authorize false --name ${var_group} \
-        --description 'Variables for my Variable group' --variables ${variable}=${value} --output yaml"
+        --description 'Variables for my Variable group' --variables ${variable}=${value} -o yaml"
         az pipelines variable-group create --authorize false --name ${var_group} \
-        --description "Variables for my Variable group" --variables ${variable}=${value} --output yaml
+        --description "Variables for my Variable group" --variables ${variable}=${value} -o yaml
       else
         echo "az pipelines variable-group variable create --group-id ${group_id} \
-        --name ${variable}  --value ${value} --secret ${secret} --output table"
+        --name ${variable}  --value ${value} --secret ${secret} -o table"
         az pipelines variable-group variable create --group-id ${group_id} \
-        --name ${variable} --value ${value} --secret ${secret} --output table
+        --name ${variable} --value ${value} --secret ${secret} -o table
       fi
   only:
     variables:
@@ -86,11 +86,11 @@ read_operation:
       source setup.sh
       echo "Performing Read operation";
       az pipelines variable-group list --top 3 --query-order Asc --output table
-      echo "az pipelines variable-group show --group-id ${group_id} --output json | jq -cr \
+      echo "az pipelines variable-group show --group-id ${group_id} -o json | jq -cr \
       .variables.${variable}.value"
-      data=$(az pipelines variable-group show --group-id ${group_id} --output json | jq -cr \
+      data=$(az pipelines variable-group show --group-id ${group_id} -o json | jq -cr \
       .variables.${variable}.value)
-      echo -e ${var_group} "Conatins Variable name-"${variable} "with value is \n"$data
+      echo -e ${var_group} "Conatins Variable-"${variable} "with value is \n"$data
   only:
     variables:
       - $OPERATION == "read"
@@ -104,9 +104,9 @@ update_operation:
       source setup.sh
       echo "Performing Update operation";
       echo "az pipelines variable-group variable update --group-id ${group_id} \
-      --name ${variable} --value ${value} --secret ${secret} --output yaml"
+      --name ${variable} --value ${value} --secret ${secret} -o yaml"
       az pipelines variable-group variable update --group-id ${group_id} \
-      --name ${variable} --value ${value} --secret ${secret} --output yaml
+      --name ${variable} --value ${value} --secret ${secret} -o yaml
   only:
     variables:
       - $OPERATION == "update"  
