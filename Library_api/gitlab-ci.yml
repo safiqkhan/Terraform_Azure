@@ -3,7 +3,7 @@ stages:
   - execute_operation
 variables:
   OPERATION:
-    value: "read" # Default operation, can be overridden
+    value: "delete" # Default operation, can be overridden
     options:
       - "create"
       - "read"
@@ -12,7 +12,7 @@ variables:
       - "drop"
     description: "Enter Execution policy"
   var_group:
-    value: "Test"
+    value: "UBS"
     description: "Enter Variable Group Name"
   variable:
     value: "Name"
@@ -40,42 +40,46 @@ execute_operation:
       az config set extension.use_dynamic_install=yes_without_prompt
       az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop
       export AZURE_DEVOPS_EXT_PAT="${AccessToken}" 
-      group_id=$(az pipelines variable-group list --query "[?name=='${var_group}'].id" --output tsv)
+      group_id=$(az pipelines variable-group list --query "[?name=='${var_group}'].id" -o tsv)
       if [ "$OPERATION" == "create" ]; then
         if [ -z "$group_id" ]; then
-          echo "az pipelines variable-group create --authorize false --name ${var_group} --description 'Variables for my Variable group' --variables ${variable}=${value} --output yaml"
-          az pipelines variable-group create --authorize false --name ${var_group} --description "Variables for my Variable group" --variables ${variable}=${value} --output yaml
+          echo "az pipelines variable-group create --authorize true --name ${var_group} \
+          --description 'Variables for my Variable group' --variables ${variable}=${value} -o yaml"
+          az pipelines variable-group create --authorize true --name ${var_group} \
+          --description "Variables for my Variable group" --variables ${variable}=${value} -o yaml
         else
-          echo "z pipelines variable-group variable create --id ${group_id} \
-          --name ${variable} --value ${value} --secret ${secret} --output table"
+          echo "az pipelines variable-group variable create --id ${group_id} \
+          --name ${variable} --value ${value} --secret ${secret} -o table"
           az pipelines variable-group variable create --id ${group_id} --name ${variable} \
-          --value ${value} --secret ${secret} --output table
+          --value ${value} --secret ${secret} -o table
         fi
       elif [ "$OPERATION" == "read" ]; then
         echo "group id= ${group_id}"
-        az pipelines variable-group list --top 3 --query-order Asc --output table
-        data=$(az pipelines variable-group show --id ${group_id} --output json | jq -cr \
+        az pipelines variable-group list --top 3 --query-order Asc -o table
+        data=$(az pipelines variable-group show --id ${group_id} -o json | jq -cr \
         .variables.${variable}.value)
-        echo "az pipelines variable-group show --id ${group_id} --output json | jq -cr \
+        echo "az pipelines variable-group show --id ${group_id} -o json | jq -cr \
         .variables.${variable}.value)"
         echo -e ${var_group} "Conatins Variable name-"${variable} "with value is \n " $data
       elif [ "$OPERATION" == "update" ]; then
         echo "az pipelines variable-group variable update --id ${group_id} --name ${variable} \
-        --value ${value} --secret ${secret} --output yaml"
+        --value ${value} --secret ${secret} -o yaml"
+        #use --new-name for change the name of the variable.
         az pipelines variable-group variable update --id ${group_id} --name ${variable} \
-        --value ${value} --secret ${secret} --output yaml
+        --value ${value} --secret ${secret} -o yaml
       elif [ "$OPERATION" == "delete" ]; then
         echo "az pipelines variable-group variable delete --id ${group_id} \
-        --name ${variable} --yes"
-        az pipelines variable-group variable delete --id ${group_id} --name ${variable} --yes
+        --name ${variable} -y"
+        az pipelines variable-group variable delete --id ${group_id} --name ${variable} -y
       elif [ "$OPERATION" == "drop" ]; then
-        echo "az pipelines variable-group delete --group-id ${group_id} --yes"
-        az pipelines variable-group delete --group-id ${group_id} --yes
+        echo "az pipelines variable-group delete --id ${group_id} -y"
+        az pipelines variable-group delete --id ${group_id} -y
       else
         echo "Invalid operation selected" 
         exit 1
       fi
       az devops logout || echo "az devops logout unsuccessful"
+      # If previously az login then az devops logout
   only:
     - main
   needs: # previous stage to succeed before it can run.
