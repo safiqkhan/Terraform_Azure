@@ -3,7 +3,7 @@ stages:
   - execute_operation
 variables:
   OPERATION:
-    value: "delete" # Default operation, can be overridden
+    value: "create" # Default operation, can be overridden
     options:
       - "create"
       - "read"
@@ -12,13 +12,13 @@ variables:
       - "drop"
     description: "Enter Execution policy"
   var_group:
-    value: "UBS"
+    value: "Test"
     description: "Enter Variable Group Name"
   variable:
     value: "Name"
     description: "Enter Variable Name"
   value:
-    value: "value"
+    value: "app"
     description: "Enter Value Value"
   secret:
     value: "false"
@@ -60,7 +60,7 @@ execute_operation:
         .variables.${variable}.value)
         echo "az pipelines variable-group show --id ${group_id} -o json | jq -cr \
         .variables.${variable}.value)"
-        echo -e ${var_group} "Conatins Variable name-"${variable} "with value is \n " $data
+        echo -e ${var_group} "Conatins Variable-"${variable} "with value is \n"$data
       elif [ "$OPERATION" == "update" ]; then
         echo "az pipelines variable-group variable update --id ${group_id} --name ${variable} \
         --value ${value} --secret ${secret} -o yaml"
