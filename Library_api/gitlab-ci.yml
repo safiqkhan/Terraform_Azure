@@ -15,10 +15,10 @@ variables:
     value: "Group"
     description: "Enter Variable Group Name"
   variable:
-    value: "Location"
+    value: "Name"
     description: "Enter Variable Name"
   value:
-    value: "Pune"
+    value: "app"
     description: "Enter Value Value"
   secret:
     value: "false"
