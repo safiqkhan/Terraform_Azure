@@ -1,7 +1,11 @@
 stages:
-  - choose_operation
-  - execute_operation
-
+  - choose
+  - setup
+  - create
+  - read
+  - update
+  - delete
+  - drop
 variables:
   OPERATION:
     value: "read" # Default operation, can be overridden
@@ -10,59 +14,129 @@ variables:
       - "read"
       - "update"
       - "delete"
+      - "drop"
     description: "Enter Execution policy"
   var_group:
-    value: "Variable_Group"
+    value: "UBS"
     description: "Enter Variable Group Name"
   variable:
-    value: "Variable1"
+    value: "Name"
     description: "Enter Variable Name"
   value:
-    value: "TEST"
+    value: "app"
     description: "Enter Value Value"
   secret:
     value: "false"
+    options:
+      - "false"
+      - "true"
     description: "Is Secret"
-
 choose_operation:
-  stage: choose_operation
+  stage: choose
   script:
     - echo "Selected operation $OPERATION"
-  only:
-    - master  # Adjust the branch or trigger conditions as needed
-
-execute_operation:
-  stage: execute_operation
+# install azurecli - curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+#install jsonquery - sudo apt install -y jq
+# gr_id=$(az pipelines variable-group list --group-name ${{ parameters.var_group }} --output table | awk '{ print $1}' | tail -1)
+#value=$(az pipelines variable-group show --group-id 39 --output yaml | awk '/${variable}:/ {p=1} p && /value:/ {print $2; p=0}')
+setup_environment:
+  stage: setup
   script:
     - |
-      az config set extension.use_dynamic_install=yes_without_prompt
+      az config set extension.use_dynamic_install=yes_without_prompt 
+      echo "az devops configure -d organization=https://dev.azure.com/safiquddinkhan \
+      project=onestop" >> setup.sh
       az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop
-      export AZURE_DEVOPS_EXT_PAT="${AccessToken}" 
+      echo "export AZURE_DEVOPS_EXT_PAT=${AccessToken}" >> setup.sh
+      export AZURE_DEVOPS_EXT_PAT="${AccessToken}"
       group_id=$(az pipelines variable-group list --query "[?name=='${var_group}'].id" --output tsv)
-      if [ "$OPERATION" == "create" ]; then
-        if [ -z "$group_id" ]; then
-          az pipelines variable-group create --authorize true --name ${var_group} --description "Variables for my Variable group" --variables ${variable}=${value} --output yaml
-        else
-          az pipelines variable-group variable create --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} --output table
-        fi
-      elif [ "$OPERATION" == "read" ]; then
-        az pipelines variable-group list --top 3 --query-order Asc --output table
-        data=$(az pipelines variable-group show --group-id ${group_id} --output json | jq -cr .variables.${variable}.value)
-        echo -e ${var_group} "Conatins Variable name-"${variable} "with value is \n " $data
-      elif [ "$OPERATION" == "update" ]; then
-        az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} --output yaml
-      elif [ "$OPERATION" == "delete" ]; then
-        az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} --yes
+      echo "group_id=${group_id}" >> setup.sh
+  dependencies:
+    - "choose_operation"
+  artifacts:
+    paths:
+      - setup.sh
+create_operation:
+  stage: create
+  script:
+    - |
+      source setup.sh
+      echo "Performing Create operation"
+      if [ -z "$group_id" ]; then
+        echo "az pipelines variable-group create --authorize false --name ${var_group} \
+        --description 'Variables for my Variable group' --variables ${variable}=${value} --output yaml"
+        az pipelines variable-group create --authorize false --name ${var_group} \
+        --description "Variables for my Variable group" --variables ${variable}=${value} --output yaml
       else
-        echo "Invalid operation selected" 
-        exit 1
+        echo "az pipelines variable-group variable create --group-id ${group_id} \
+        --name ${variable}  --value ${value} --secret ${secret} --output table"
+        az pipelines variable-group variable create --group-id ${group_id} \
+        --name ${variable} --value ${value} --secret ${secret} --output table
       fi
-      az devops logout || echo "az devops logout unsuccessful"
-      
   only:
-    - master
-  # rules:
-  #   - if: '$CI_JOB_SUCCESS == "true"'
-  #   - when: on_success  # Run this job only if the previous job succeeds
-      # az devops login --organization "https://dev.azure.com/safiquddinkhan"
-      # az config set extension.use_dynamic_install=yes_without_prompt
+    variables:
+      - $OPERATION == "create"
+  needs:
+    - job: setup_environment
+
+read_operation:
+  stage: read
+  script:
+    - |
+      source setup.sh
+      echo "Performing Read operation";
+      az pipelines variable-group list --top 3 --query-order Asc --output table
+      echo "az pipelines variable-group show --group-id ${group_id} --output json | jq -cr \
+      .variables.${variable}.value"
+      data=$(az pipelines variable-group show --group-id ${group_id} --output json | jq -cr \
+      .variables.${variable}.value)
+      echo -e ${var_group} "Conatins Variable name-"${variable} "with value is \n"$data
+  only:
+    variables:
+      - $OPERATION == "read"
+  needs:
+    - job: setup_environment
+
+update_operation:
+  stage: update
+  script:
+    - |
+      source setup.sh
+      echo "Performing Update operation";
+      echo "az pipelines variable-group variable update --group-id ${group_id} \
+      --name ${variable} --value ${value} --secret ${secret} --output yaml"
+      az pipelines variable-group variable update --group-id ${group_id} \
+      --name ${variable} --value ${value} --secret ${secret} --output yaml
+  only:
+    variables:
+      - $OPERATION == "update"  
+  needs:
+    - job: setup_environment
+
+delete_operation:
+  stage: delete
+  script:
+    - |
+      source setup.sh
+      echo "Performing Delete operation";
+      echo "az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y"
+      az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y
+  only:
+    variables:
+      - $OPERATION == "delete"        
+  needs:
+    - job: setup_environment
+
+drop_operation:
+  stage: drop
+  script:
+    - |
+      source setup.sh
+      echo "Performing Drop operation";
+      echo "az pipelines variable-group delete --group-id ${group_id} -y"
+      az pipelines variable-group variable delete --group-id ${group_id} -y
+  only:
+    variables:
+      - $OPERATION == "drop"
+  needs:
+    - job: setup_environment
