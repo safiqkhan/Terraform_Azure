@@ -12,13 +12,13 @@ variables:
       - "drop"
     description: "Enter Execution policy"
   var_group:
-    value: "Group"
+    value: "Variable_Group"
     description: "Enter Variable Group Name"
   variable:
-    value: "Name"
+    value: "Variable"
     description: "Enter Variable Name"
   value:
-    value: "app"
+    value: "value"
     description: "Enter Value Value"
   secret:
     value: "false"
@@ -46,22 +46,28 @@ execute_operation:
           echo "az pipelines variable-group create --authorize false --name ${var_group} --description 'Variables for my Variable group' --variables ${variable}=${value} --output yaml"
           az pipelines variable-group create --authorize false --name ${var_group} --description "Variables for my Variable group" --variables ${variable}=${value} --output yaml
         else
-          echo "z pipelines variable-group variable create --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} --output table"
-          az pipelines variable-group variable create --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} --output table
+          echo "z pipelines variable-group variable create --id ${group_id} \
+          --name ${variable} --value ${value} --secret ${secret} --output table"
+          az pipelines variable-group variable create --id ${group_id} --name ${variable} \
+          --value ${value} --secret ${secret} --output table
         fi
       elif [ "$OPERATION" == "read" ]; then
         echo "group id= ${group_id}"
         az pipelines variable-group list --top 3 --query-order Asc --output table
-        data=$(az pipelines variable-group show --group-id ${group_id} \
-        --output json | jq -cr .variables.${variable}.value)
-        echo "az pipelines variable-group show --group-id ${group_id} --output json"
+        data=$(az pipelines variable-group show --id ${group_id} --output json | jq -cr \
+        .variables.${variable}.value)
+        echo "az pipelines variable-group show --id ${group_id} --output json | jq -cr \
+        .variables.${variable}.value)"
         echo -e ${var_group} "Conatins Variable name-"${variable} "with value is \n " $data
       elif [ "$OPERATION" == "update" ]; then
-        echo "az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} --output yaml"
-        az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} --output yaml
+        echo "az pipelines variable-group variable update --id ${group_id} --name ${variable} \
+        --value ${value} --secret ${secret} --output yaml"
+        az pipelines variable-group variable update --id ${group_id} --name ${variable} \
+        --value ${value} --secret ${secret} --output yaml
       elif [ "$OPERATION" == "delete" ]; then
-        echo "az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} --yes"
-        az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} --yes
+        echo "az pipelines variable-group variable delete --id ${group_id} \
+        --name ${variable} --yes"
+        az pipelines variable-group variable delete --id ${group_id} --name ${variable} --yes
       elif [ "$OPERATION" == "drop" ]; then
         echo "az pipelines variable-group delete --group-id ${group_id} --yes"
         az pipelines variable-group delete --group-id ${group_id} --yes
