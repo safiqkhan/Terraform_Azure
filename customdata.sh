@@ -24,7 +24,7 @@ log "installing Gitlab"
 curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | sudo bash
 public_ip=$(curl ifcfg.me)
 sudo EXTERNAL_URL=http://$public_ip apt install gitlab-ce
-password=$(grep Password: /etc/gitlab/initial_root_password)
+password=$(sudo grep Password: /etc/gitlab/initial_root_password)
 log "Gitlab username: root"
 log "Gitlab ${password}"
 log "installing Gitlab-runner"
