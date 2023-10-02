@@ -29,7 +29,7 @@ variables:
 setup_backend:
   stage: setup
   script:
-    # - cd backend
+    - cd backend
     - terraform --version
     - terraform init
     - terraform validate
@@ -37,6 +37,9 @@ setup_backend:
     - terraform import 
       azurerm_resource_group.rg
       "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${TF_VAR_BE_RG_NAME}-rg"
+    - terraform import
+      azurerm_storage_account.tfstate 
+      "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/Backend-rg/providers/Microsoft.Storage/storageAccounts/${TF_VAR_BE_STORAGE_ACCOUNT}"
     - terraform apply
       -var="resource_group_name=${TF_VAR_BE_RG_NAME}"
       -var="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}" --auto-approve
