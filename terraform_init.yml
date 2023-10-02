@@ -1,0 +1,27 @@
+parameters:
+- name: storage_rg_name
+  type: string
+  default: Test-rg
+- name: location
+  type: string
+  default: Central india
+- name: storage_account_name
+  type: string
+  default: safiqstoracc
+  
+
+steps:
+  - task: TerraformCLI@0
+    displayName: 'initialise Terraform'
+    timeoutInMinutes: 3
+    inputs:
+      command: 'init'
+      workingDirectory: '$(Build.SourcesDirectory)'
+      backendType: 'azurerm'
+      backendServiceArm: 'Free_Trial'
+      ensureBackend: true
+      backendAzureRmResourceGroupName: '$(storage_rg_name)'
+      backendAzureRmResourceGroupLocation: '$(location)'
+      backendAzureRmStorageAccountName: '$(storage_account_name)'
+      backendAzureRmContainerName: 'tfstate'
+      backendAzureRmKey: 'terraform.tfstate'
