@@ -44,3 +44,4 @@ output "resource_group_id" {
 }
 
 # run terraform apply --target=module.linux_vm --auto-approve
+# run terraform refresh to updates Terraform's state file as per lattest changes to your infrastructure
