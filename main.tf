@@ -32,5 +32,11 @@ module "windows_vm" {
   admin_username        = "Adminuser"
   admin_password        = var.admin_password
 }
+data "azurerm_resource_group" "rg-id" {
+  name = "${var.resource_group_name}-rg"
+}
+output "resource_group_id" {
+  value = data.azurerm_resource_group.rg-id.id
+}
 
 # run terraform apply --target=module.linux_vm --auto-approve
