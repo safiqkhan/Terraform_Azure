@@ -1,6 +1,5 @@
-#  .tf_job_template template is later referenced and reused in the tfvalidate, tfdeploy, and tfdestroy jobs by using the <<: *tf_job_template syntax.
-
 stages:
+  - setup
   - tfvalidate
   - tfplan
   - tfdeploy
@@ -12,13 +11,15 @@ variables:
       - "plan"
       - "apply"
       - "destroy"
+    description: "Enter Execution policy"
   TF_VAR_PLATFORM: "linux"
   TF_VAR_BACKEND_SERVICE_ARM: "Free_Trial"
   TF_VAR_BACKEND_RG_NAME: "Test-rg"  # Replace with your variable
   TF_VAR_BACKEND_STORAGE_ACCOUNT: "safiqstoracc"  # Replace with your uniq storage account variable
   TF_VAR_RESOURCE_GROUP_NAME: "Test-rg"  # Replace with your variable
 
-.tf_job_template: &tf_job_template
+setup_deploy:
+  stage: setup
   script:
     - apt-get update
     - apt-get install -y curl
@@ -27,45 +28,50 @@ variables:
     - apt-get update
     - apt-get install -y terraform
     - terraform --version
-    - terraform init -backend-config="azurerm=${TF_VAR_BACKEND_SERVICE_ARM}" -backend-config="resource_group_name=${TF_VAR_BACKEND_RG_NAME}" -backend-config="storage_account_name=${TF_VAR_BACKEND_STORAGE_ACCOUNT}"
+    - terraform init
+    # - terraform init -backend-config="./backend.tfbackend
   artifacts:
     paths:
       - .terraform/
       - terraform.tfstate
 
 tfvalidate:
-  <<: *tf_job_template
+  extends: setup_deploy
   stage: tfvalidate
   script:
     - terraform validate
-  only:
-    variables:
-      - $TF_VAR_EXECLEVEL == "plan"
+  # only:
+  #   variables:
+  #     - $TF_VAR_EXECLEVEL == "plan"
 
 tfplan:
-  <<: *tf_job_template
+  extends: setup_deploy
   stage: tfplan
   script:
-    - terraform plan -target=module.${TF_VAR_PLATFORM}_vm -var resource_group_name=${TF_VAR_RESOURCE_GROUP_NAME} -out=terraform.tfplan
-  only:
-    variables:
-      - $TF_VAR_EXECLEVEL == "plan"
+    # - !reference [.setup_deploy, script]
+    - terraform plan -target=module.${TF_VAR_PLATFORM}_vm \
+      -var resource_group_name=$ {TF_VAR_RESOURCE_GROUP_NAME} -out=terraform.tfplan
+  # only:
+  #   variables:
+  #     - $TF_VAR_EXECLEVEL == "plan"
   artifacts:
     paths:
       - terraform.tfplan
+
 tfdeploy:
-  <<: *tf_job_template
+  extends: setup_deploy
   stage: tfdeploy
   script:
     - terraform apply -target=module.${TF_VAR_PLATFORM}_vm -var resource_group_name=${TF_VAR_RESOURCE_GROUP_NAME}
-  only:
-    variables:
-      - $TF_VAR_EXECLEVEL == "apply"
+  # only:
+  #   variables:
+  #     - $TF_VAR_EXECLEVEL == "apply"
+
 tfdestroy:
-  <<: *tf_job_template
+  extends: setup_deploy
   stage: tfdestroy
   script:
     - terraform destroy -target=module.${TF_VAR_PLATFORM}_vm
-  only:
-    variables:
-      - $TF_VAR_EXECLEVEL == "destroy"
+  # only:
+  #   variables:
+  #     - $TF_VAR_EXECLEVEL == "destroy"
