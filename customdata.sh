@@ -41,7 +41,6 @@ sudo gitlab-ctl start
 sudo gitlab-ctl status
 log "Start the gitlab-runner service"
 sudo gitlab-runner start
-sudo gitlab-runner enable
 # sudo gitlab-runner verify
 # sudo gitlab-runner run
 log "Script completed."
