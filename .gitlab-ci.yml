@@ -1,0 +1,57 @@
+#  .tf_job_template template is later referenced and reused in the tfvalidate, tfdeploy, and tfdestroy jobs by using the <<: *tf_job_template syntax.
+
+stages:
+  - tfvalidate
+  - tfplan
+  - tfdeploy
+  - tfdestroy
+
+variables:
+  TF_VAR_EXECLEVEL: "plan"
+  TF_VAR_PLATFORM: "linux"
+  TF_VAR_BACKEND_SERVICE_ARM: "Free_Trial"
+  TF_VAR_BACKEND_RG_NAME: "Test-rg"  # Replace with your variable
+  TF_VAR_BACKEND_STORAGE_ACCOUNT: "uniqstorageacc"  # Replace with your uniq storage account variable
+  TF_VAR_RESOURCE_GROUP_NAME: "Test-rg"  # Replace with your variable
+
+.tf_job_template: &tf_job_template
+  script:
+    - apt-get update
+    - apt-get install -y curl
+    - curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    - apt-get update
+    - apt-get install -y terraform
+    - terraform --version
+    - terraform init -backend-config="azurerm=${TF_VAR_BACKEND_SERVICE_ARM}" -backend-config="resource_group_name=${TF_VAR_BACKEND_RG_NAME}" -backend-config="storage_account_name=${TF_VAR_BACKEND_STORAGE_ACCOUNT}"
+  artifacts:
+    paths:
+      - .terraform/
+
+tfvalidate:
+  <<: *tf_job_template
+  stage: tfvalidate
+  script:
+    - terraform validate
+
+tfplan:
+  <<: *tf_job_template
+  stage: tfplan
+  script:
+    - terraform plan -target=module.${TF_VAR_PLATFORM}_vm -var resource_group_name=${TF_VAR_RESOURCE_GROUP_NAME} -out=terraform.tfplan
+  artifacts:
+    paths:
+      - terraform.tfplan
+tfdeploy:
+  <<: *tf_job_template
+  stage: tfdeploy
+  script:
+    - timeout $TIMEOUT_MINUTES terraform apply -target=module.${TF_VAR_PLATFORM}_vm -var resource_group_name=${TF_VAR_RESOURCE_GROUP_NAME}
+  artifacts:
+    paths:
+      - terraform.tfplan
+tfdestroy:
+  <<: *tf_job_template
+  stage: tfdestroy
+  script:
+    - terraform destroy -target=module.${TF_VAR_PLATFORM}_vm -var resource_group_name=${TF_VAR_RESOURCE_GROUP_NAME}
