@@ -16,10 +16,6 @@ variables:
 pool:
   vmImage: ubuntu-latest
 parameters:
-#  - name: adminpassword
-#    displayName: Admin_Password
-#    type: string
-#    default:
  - name: execlevel
    displayName: Execution Level
    type: string
@@ -41,6 +37,7 @@ stages:
     condition: eq ('${{parameters.execlevel}}' , 'plan')
     jobs:
       - job: validate
+        timeoutInMinutes: 6
         continueOnError: false
         steps:
           - task: TerraformInstaller@0
@@ -49,20 +46,11 @@ stages:
               terraformVersion: 'latest'
           - checkout: self
             displayName: 'Checkout repository'
-          - task: TerraformCLI@0
-            displayName: 'initialise Terraform'
-            timeoutInMinutes: 3
-            inputs:
-              command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)'
-              backendType: 'azurerm'
-              backendServiceArm: 'Free_Trial'
-              ensureBackend: true
-              backendAzureRmResourceGroupName: '$(storage_rg_name)'
-              backendAzureRmResourceGroupLocation: '$(location)'
-              backendAzureRmStorageAccountName: '$(storage_account_name)'
-              backendAzureRmContainerName: 'tfstate'
-              backendAzureRmKey: 'terraform.tfstate'
+          - template: terraform_init.yml
+            parameters:
+              storage_rg_name: $(storage_rg_name)
+              location: $(location)
+              storage_account_name: $(storage_account_name)
           - task: TerraformCLI@0
             displayName: 'Validate Terraform'
             inputs:
@@ -80,17 +68,13 @@ stages:
     condition: eq ('${{parameters.execlevel}}' , 'apply')
     jobs:
      - job: apply
+       timeoutInMinutes: 16
        steps:
-         
-          - task: TerraformCLI@0
-            displayName: 'initialise Terraform'
-            inputs:
-              command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)'
-              backendType: 'azurerm'
-              backendServiceArm: 'Free_Trial'
-              backendAzureRmResourceGroupName: '$(storage_rg_name)'
-              backendAzureRmStorageAccountName: '$(storage_account_name)'
+          - template: terraform_init.yml
+            parameters:
+              storage_rg_name: $(storage_rg_name)
+              location: $(location)
+              storage_account_name: $(storage_account_name)
           - task: TerraformCLI@0
             displayName: 'Plan Terraform'
             inputs:
@@ -111,7 +95,6 @@ stages:
           - task: TerraformCLI@0
             displayName: 'Apply Terraform'
             continueOnError: true
-            timeoutInMinutes: 15
             inputs:
               command: 'apply'
               environmentServiceName: 'Free_Trial'
@@ -131,22 +114,18 @@ stages:
     condition: eq ('${{parameters.execlevel}}' , 'destroy')
     jobs:
      - job: destroy
+       timeoutInMinutes: 6
        steps:
-          - task: TerraformCLI@0
-            displayName: 'initialise Terraform'
-            inputs:
-              command: 'init'
-              workingDirectory: '$(Build.SourcesDirectory)'
-              backendType: 'azurerm'
-              backendServiceArm: 'Free_Trial'
-              backendAzureRmResourceGroupName: '$(storage_rg_name)'
-              backendAzureRmStorageAccountName: '$(storage_account_name)'
+          - template: terraform_init.yml
+            parameters:
+              storage_rg_name: $(storage_rg_name)
+              location: $(location)
+              storage_account_name: $(storage_account_name)
           - task: TerraformCLI@0
             displayName: 'destroy Terraform'
-            timeoutInMinutes: 7
             continueOnError: true
             inputs:
               command: 'destroy'
               environmentServiceName: 'Free_Trial'
               workingDirectory: '$(Build.SourcesDirectory)'
- #             commandOptions: '--target=module.${{ parameters.platform }}_vm'
+              commandOptions: '--target=module.${{ parameters.platform }}_vm'
