@@ -20,7 +20,7 @@ variables:
     value: "Test"
     description: "Enter Resource Group"
   TF_VAR_BE_RG_NAME: 
-    value: "Backend-rg"
+    value: "Backend"
     description: "Enter Backedn Resource Group"
   TF_VAR_BE_STORAGE_ACCOUNT: 
     value: "safiqstoracc"
@@ -34,7 +34,12 @@ setup_backend:
     - terraform init
     - terraform validate
     - terraform plan -out=backend.tfplan
-    - terraform apply -var resource_group_name=${TF_VAR_BE_RG_NAME} -var storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT} --auto-approve
+    - terraform import \
+      azurerm_resource_group.rg
+      "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${TF_VAR_BE_RG_NAME}-rg"
+    - terraform apply \
+      -var="resource_group_name=${TF_VAR_BE_RG_NAME}"
+      -var="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}" --auto-approve
     # - terraform init -backend-config="./backend.tfbackend
   artifacts:
     paths:
@@ -54,11 +59,15 @@ tfplan:
   stage: tfplan
   script:
     # - !reference [setup_backend, script]
-    - terraform init -backend-config="resource_group_name=${TF_VAR_BE_RG_NAME}" -backend-config="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}"
-    - terraform plan --target=module.${TF_VAR_PLATFORM}_vm \
-     -var resource_group_name=${TF_VAR_RG_NAME} -out=terraform.tfplan
-    - terraform import azurerm_resource_group.rg \
-     /subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${TF_VAR_RG_NAME}-rg
+    - terraform init \
+      -backend-config="resource_group_name=${TF_VAR_BE_RG_NAME}" -backend-config="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}"
+    - terraform plan
+      --target=module.${TF_VAR_PLATFORM}_vm
+      -var="resource_group_name=${TF_VAR_RG_NAME}"
+      -out=terraform.tfplan
+    - terraform import \
+      azurerm_resource_group.rg
+      "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${TF_VAR_RG_NAME}-rg"
   only:
     variables:
       - $TF_VAR_EXECLEVEL == "plan"
@@ -71,8 +80,14 @@ tfplan:
 tfdeploy:
   stage: tfdeploy
   script:
-    - terraform apply --target=module.${TF_VAR_PLATFORM}_vm \
-     -var resource_group_name=${TF_VAR_RG_NAME} --auto-approve
+    - terraform init -backend-config="resource_group_name=${TF_VAR_BE_RG_NAME}" -backend-config="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}"
+    - terraform import \
+      azurerm_resource_group.rg
+      "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${TF_VAR_RG_NAME}-rg"
+    - terraform apply \
+      --target=module.${TF_VAR_PLATFORM}_vm
+      -var="resource_group_name=${TF_VAR_RG_NAME}"
+      --auto-approve
   only:
     variables:
       - $TF_VAR_EXECLEVEL == "apply"
@@ -80,6 +95,7 @@ tfdeploy:
 tfdestroy:
   stage: tfdestroy
   script:
+    - terraform init -backend-config="resource_group_name=${TF_VAR_BE_RG_NAME}" -backend-config="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}"
     - terraform destroy --target=module.${TF_VAR_PLATFORM}_vm --auto-approve
   only:
     variables:
