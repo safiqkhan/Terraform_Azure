@@ -21,12 +21,12 @@ variables:
 setup_deploy:
   stage: setup
   script:
-    - apt-get update
-    - apt-get install -y curl
-    - curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-    - apt-get update
-    - apt-get install -y terraform
+    # - apt-get update
+    # - apt-get install -y curl
+    # - curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    # - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    # - apt-get update
+    # - apt-get install -y terraform
     - terraform --version
     - terraform init
     # - terraform init -backend-config="./backend.tfbackend
@@ -40,9 +40,9 @@ tfvalidate:
   stage: tfvalidate
   script:
     - terraform validate
-  # only:
-  #   variables:
-  #     - $TF_VAR_EXECLEVEL == "plan"
+  only:
+    variables:
+      - $TF_VAR_EXECLEVEL == "plan"
 
 tfplan:
   extends: setup_deploy
@@ -51,27 +51,29 @@ tfplan:
     # - !reference [.setup_deploy, script]
     - terraform plan -target=module.${TF_VAR_PLATFORM}_vm \
       -var resource_group_name=$ {TF_VAR_RESOURCE_GROUP_NAME} -out=terraform.tfplan
-  # only:
-  #   variables:
-  #     - $TF_VAR_EXECLEVEL == "plan"
+  only:
+    variables:
+      - $TF_VAR_EXECLEVEL == "plan"
   artifacts:
     paths:
       - terraform.tfplan
+  needs:
+    - job: tfvalidate
 
 tfdeploy:
   extends: setup_deploy
   stage: tfdeploy
   script:
     - terraform apply -target=module.${TF_VAR_PLATFORM}_vm -var resource_group_name=${TF_VAR_RESOURCE_GROUP_NAME}
-  # only:
-  #   variables:
-  #     - $TF_VAR_EXECLEVEL == "apply"
+  only:
+    variables:
+      - $TF_VAR_EXECLEVEL == "apply"
 
 tfdestroy:
   extends: setup_deploy
   stage: tfdestroy
   script:
     - terraform destroy -target=module.${TF_VAR_PLATFORM}_vm
-  # only:
-  #   variables:
-  #     - $TF_VAR_EXECLEVEL == "destroy"
+  only:
+    variables:
+      - $TF_VAR_EXECLEVEL == "destroy"
