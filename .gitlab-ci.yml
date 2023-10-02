@@ -13,10 +13,18 @@ variables:
       - "apply"
       - "destroy"
     description: "Enter Execution policy"  # Default operation, can be overridden
-  TF_VAR_PLATFORM: "linux"
-  TF_VAR_RG_NAME: "Test"
-  TF_VAR_BE_RG_NAME: "Backend-rg"
-  TF_VAR_BE_STORAGE_ACCOUNT: "safiqstoracc"
+  TF_VAR_PLATFORM: 
+    value: "linux"
+    description: "Enter Platform"
+  TF_VAR_RG_NAME:
+    value: "Test"
+    description: "Enter Resource Group"
+  TF_VAR_BE_RG_NAME: 
+    value: "Backend-rg"
+    description: "Enter Backedn Resource Group"
+  TF_VAR_BE_STORAGE_ACCOUNT: 
+    value: "safiqstoracc"
+    description: "Enter Backedn Storage account name"
 
 setup_backend:
   stage: setup
@@ -25,8 +33,8 @@ setup_backend:
     - terraform --version
     - terraform init
     - terraform validate
-    - terraform apply -var resource_group_name=$(TF_VAR_BE_RG_NAME) \
-      -var storage_account_name=$(TF_VAR_BE_STORAGE_ACCOUNT)
+    - terraform plan -out=backend.tfplan
+    - terraform apply -var resource_group_name=${TF_VAR_BE_RG_NAME} -var storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT} --auto-approve
     # - terraform init -backend-config="./backend.tfbackend
   artifacts:
     paths:
@@ -47,10 +55,10 @@ tfplan:
   script:
     # - !reference [setup_backend, script]
     - terraform init -backend-config="resource_group_name=${TF_VAR_BE_RG_NAME}" -backend-config="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}"
-    - terraform plan --target=module.$(TF_VAR_PLATFORM)_vm \
-     -var resource_group_name=$(TF_VAR_RG_NAME) -out=terraform.tfplan
+    - terraform plan --target=module.${TF_VAR_PLATFORM}_vm \
+     -var resource_group_name=${TF_VAR_RG_NAME} -out=terraform.tfplan
     - terraform import azurerm_resource_group.rg \
-     /subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/$(TF_VAR_RG_NAME)-rg
+     /subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${TF_VAR_RG_NAME}-rg
   only:
     variables:
       - $TF_VAR_EXECLEVEL == "plan"
@@ -63,8 +71,8 @@ tfplan:
 tfdeploy:
   stage: tfdeploy
   script:
-    - terraform apply --target=module.$(TF_VAR_PLATFORM)_vm \
-     -var resource_group_name=$(TF_VAR_RG_NAME) --auto-approve
+    - terraform apply --target=module.${TF_VAR_PLATFORM}_vm \
+     -var resource_group_name=${TF_VAR_RG_NAME} --auto-approve
   only:
     variables:
       - $TF_VAR_EXECLEVEL == "apply"
@@ -72,7 +80,7 @@ tfdeploy:
 tfdestroy:
   stage: tfdestroy
   script:
-    - terraform destroy --target=module.$(TF_VAR_PLATFORM)_vm --auto-approve
+    - terraform destroy --target=module.${TF_VAR_PLATFORM}_vm --auto-approve
   only:
     variables:
       - $TF_VAR_EXECLEVEL == "destroy"
