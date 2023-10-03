@@ -47,6 +47,7 @@ jobs:
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform Backend
+        continue-on-error: true
         run: |
           cd backend
           terraform --version
