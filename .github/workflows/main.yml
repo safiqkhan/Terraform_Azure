@@ -15,22 +15,18 @@ on:
       PLATFORM:
         type: environment
         description: 'Select the OS type'
-        default: 'linux'
         required: true
       RG_NAME: 
         type: environment
         description: 'Select the OS type'
-        default: 'TEST'
         required: true
       BE_RG_NAME: 
         type: environment
         description: 'Select the OS type'
-        default: 'Backend'
         required: true
       BE_STORAGE_ACCOUNT: 
         type: environment
         description: 'Select the OS type'
-        default: 'safiqstoragacc'
         required: true
       Both_RG_Same:
         type: boolean
