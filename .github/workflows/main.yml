@@ -20,6 +20,10 @@ on:
         type: string
         description: 'Select the RG Name'
         default: 'Test'
+      location: 
+        type: string
+        description: 'Select the RG Location'
+        default: 'Central India'
       BE_RG_NAME: 
         type: string
         description: 'Select the BE_RG Name'
@@ -49,11 +53,11 @@ jobs:
           terraform --version
           terraform init
           terraform validate
-          terraform plan -out=backend.tfplan
+          terraform plan -var="resource_group_name=${{ inputs.BE_RG_NAME }}" -var="location=${{ inputs.location }}" -var="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" -out=backend.tfplan
           terraform import azurerm_resource_group.rg "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.RG_NAME }}-rg"
           terraform import azurerm_storage_account.tfstate "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg/providers/Microsoft.Storage/storageAccounts/${ inputs.BE_STORAGE_ACCOUNT }"
           terraform import azurerm_storage_container.tfstate "https://${{ inputs.BE_STORAGE_ACCOUNT}}:.blob.core.windows.net/tfstate"
-          terraform apply -var="resource_group_name=${{ inputs.BE_RG_NAME }}" -var="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" --auto-approve
+          terraform apply "backend.tfplan"
 
         # env:
         #   TF_VAR_BE_RG_NAME: ${{ secrets.TF_VAR_BE_RG_NAME }}
@@ -65,7 +69,6 @@ jobs:
           name: terraform-state
           path: |
             .terraform/
-            terraform.tfstate
 
   tfvalidate:
     runs-on: ubuntu-latest
@@ -74,7 +77,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
+      - name: Azure Login
+        run: |
+          az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Initialize Terraform
         run: |
           terraform init \
@@ -84,6 +90,7 @@ jobs:
           -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
           -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" \
           -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
+          -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate"
 
       - name: Validate Terraform Configuration
         run: terraform validate
@@ -95,7 +102,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
+      - name: Azure Login
+        run: |
+          az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Initialize Terraform
         run: |
           terraform init \
