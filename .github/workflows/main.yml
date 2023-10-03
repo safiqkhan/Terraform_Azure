@@ -59,12 +59,15 @@ jobs:
         #   TF_VAR_BE_STORAGE_ACCOUNT: ${{ secrets.TF_VAR_BE_STORAGE_ACCOUNT }}
       - name: import resources
         run: |
+          cd backend
           terraform import azurerm_resource_group.rg "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg" || true
           terraform import azurerm_storage_account.tfstate "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg/providers/Microsoft.Storage/storageAccounts/${ inputs.BE_STORAGE_ACCOUNT }" || true
           terraform import azurerm_storage_container.tfstate "https://${{ inputs.BE_STORAGE_ACCOUNT}}:.blob.core.windows.net/tfstate" || true
       - name: Setup Terraform Backend
         continue-on-error: true
-        run: terraform apply backend.tfplan 
+        run: |
+          cd backend
+          terraform apply backend.tfplan 
         
       - name: Upload Terraform State
         uses: actions/upload-artifact@v2
