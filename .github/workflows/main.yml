@@ -50,8 +50,8 @@ jobs:
           terraform init
           terraform validate
           terraform plan -out=backend.tfplan
-          terraform import azurerm_resource_group.rg "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ inputs.BE_RG_NAME }}-rg"
-          terraform import azurerm_storage_account.tfstate "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/Backend-rg/providers/Microsoft.Storage/storageAccounts/${TF_VAR_BE_STORAGE_ACCOUNT}"
+          terraform import azurerm_resource_group.rg "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ inputs.RG_NAME }}-rg"
+          terraform import azurerm_storage_account.tfstate "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ inputs.BE_RG_NAME }}-rg/providers/Microsoft.Storage/storageAccounts/${ inputs.BE_STORAGE_ACCOUNT }"
           terraform import azurerm_storage_container.tfstate "https://${{ inputs.BE_STORAGE_ACCOUNT}}:.blob.core.windows.net/tfstate"
           terraform apply -var="resource_group_name=${{ inputs.BE_RG_NAME }}" -var="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" --auto-approve
 
