@@ -193,7 +193,8 @@ jobs:
       - name: Destroy Infrastructure
         run: |
 
-          cd backend && terraform destroy --auto-approve || true
+          cd backend 
+          terraform destroy --auto-approve || true
         # terraform destroy --auto-approve || true
         # terraform destroy --target=module.${{ inputs.PLATFORM }}_vm --auto-approve
 # GitHub self-hosted runner package- https://github.com/actions/runner/releases
