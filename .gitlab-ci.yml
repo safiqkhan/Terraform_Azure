@@ -124,7 +124,7 @@ tfdeploy:
       - $EXECLEVEL == "apply"
   artifacts:
     paths:
-      - "*.pem"
+      - azurekey.pem
 
 tfdestroy:
   stage: tfdestroy
