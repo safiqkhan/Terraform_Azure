@@ -61,7 +61,7 @@ jobs:
   create_operation:
     needs: choose_operation
     runs-on: ubuntu-latest
-    if: env.OPERATION == 'create'
+    if: ${{ inputs.OPERATION== 'create' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
@@ -92,7 +92,7 @@ jobs:
   read_operation:
     needs: choose_operation
     runs-on: ubuntu-latest
-    if: env.OPERATION == 'read'
+    if: ${{ inputs.OPERATION== 'read' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
@@ -120,7 +120,7 @@ jobs:
   update_operation:
     needs: choose_operation
     runs-on: ubuntu-latest
-    if: env.OPERATION == 'update'
+    if: inputs.OPERATION== 'update'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
@@ -146,7 +146,7 @@ jobs:
   delete_operation:
     needs: choose_operation
     runs-on: ubuntu-latest
-    if: env.OPERATION == 'delete'
+    if: ${{ inputs.OPERATION== 'delete' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
