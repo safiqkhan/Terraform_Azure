@@ -60,9 +60,7 @@ jobs:
 
       - name: Initialize Terraform
         run: |
-          terraform init 
-          -backend-config="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" 
-          -backend-config="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}"
+          terraform init -backend-config="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" -backend-config="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}"
 
       - name: Create Terraform Plan
         run: |
