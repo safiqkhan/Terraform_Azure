@@ -148,7 +148,7 @@ jobs:
   delete_operation:
     needs: choose_operation
     runs-on: ubuntu-latest
-    if: ${{ inputs.OPERATION== 'delete' }}
+    if: inputs.OPERATION== 'delete'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
@@ -163,8 +163,8 @@ jobs:
         run: |
           source setup.sh
           echo "Performing Delete operation"
-          echo "az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y"
-          az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y
+          echo "az pipelines variable-group variable delete --group-id ${group_id} --name "${variable}" -y"
+          az pipelines variable-group variable delete --group-id ${group_id} --name "${variable}" -y
         env:
           variable: ${{ inputs.variable }}
         shell: bash
