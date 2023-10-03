@@ -96,7 +96,6 @@ jobs:
   tfplan:
     if: ${{ github.event.inputs.EXECLEVEL== 'plan' }}
     runs-on: ubuntu-latest
-    needs: setup_backend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
