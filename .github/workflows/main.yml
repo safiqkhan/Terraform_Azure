@@ -190,7 +190,7 @@ jobs:
 
       - name: Destroy Infrastructure
         run: |
-          terraform destroy --target=module${{ inputs.PLATFORM }}_vm --auto-approve
+          terraform destroy --target=module.${{ inputs.PLATFORM }}_vm --auto-approve
 # GitHub self-hosted runner package- https://github.com/actions/runner/releases
 # ./config.sh --url https://github.com/yourusername/yourrepository --token YOUR-PAT --name NAME-OF-YOUR-RUNNER --work WORK-DIRECTORY
 # start the runner
