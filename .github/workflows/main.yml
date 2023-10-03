@@ -3,13 +3,15 @@ name: Terraform Pipeline
 on:
   workflow_dispatch:
     inputs:
-      EXECLEVEL:
-        type: choice
+      environment:
+        type: EXECLEVEL  
         description: 'Enter Execution policy'
+        required: true
+        default: 'plan'
         options:
-        - 'plan'
-        - 'apply'
-        - 'destroy'
+        - plan
+        - apply
+        - destroy
       PLATFORM:
         type: environment
         description: 'Select the OS type'
