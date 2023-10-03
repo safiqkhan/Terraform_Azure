@@ -1,0 +1,164 @@
+name: Azure DevOps Variable Group Operations
+
+on: [push]
+
+jobs:
+  choose_operation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up environment
+        run: |
+          echo "Selected operation ${{ env.OPERATION }}"
+          echo "az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop" >> setup.sh
+          az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop
+          echo "export AZURE_DEVOPS_EXT_PAT=${{ secrets.AccessToken }}" >> setup.sh
+          export AZURE_DEVOPS_EXT_PAT="${{ secrets.AccessToken }}"
+          group_id=$(az pipelines variable-group list --query "[?name=='${{ env.var_group }}'].id" -o tsv)
+          echo "group_id=${{ group_id }}" >> setup.sh
+        env:
+          AccessToken: ${{ secrets.AccessToken }}
+          var_group: ${{ env.var_group }}
+        shell: bash
+
+      - name: Save setup.sh as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: setup-artifact
+          path: setup.sh
+
+  create_operation:
+    needs: choose_operation
+    runs-on: ubuntu-latest
+    if: env.OPERATION == 'create'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Restore setup.sh
+        uses: actions/download-artifact@v2
+        with:
+          name: setup-artifact
+          path: .
+
+      - name: Performing Create operation
+        run: |
+          source setup.sh
+          if [ -z "$group_id" ]; then
+            echo "az pipelines variable-group create --authorize false --name ${{ env.var_group }} --description 'Variables for my Variable group' --variables ${{ env.variable }}=${{ env.value }} -o yaml"
+            az pipelines variable-group create --authorize false --name ${{ env.var_group }} --description "Variables for my Variable group" --variables ${{ env.variable }}=${{ env.value }} -o yaml
+          else
+            echo "az pipelines variable-group variable create --group-id ${{ group_id }} --name ${{ env.variable }} --value ${{ env.value }} --secret ${{ env.secret }} -o table"
+            az pipelines variable-group variable create --group-id ${{ group_id }} --name ${{ env.variable }} --value ${{ env.value }} --secret ${{ env.secret }} -o table
+          fi
+        env:
+          var_group: ${{ env.var_group }}
+          variable: ${{ env.variable }}
+          value: ${{ env.value }}
+          secret: ${{ env.secret }}
+        shell: bash
+
+  read_operation:
+    needs: choose_operation
+    runs-on: ubuntu-latest
+    if: env.OPERATION == 'read'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Restore setup.sh
+        uses: actions/download-artifact@v2
+        with:
+          name: setup-artifact
+          path: .
+
+      - name: Performing Read operation
+        run: |
+          source setup.sh
+          echo "Performing Read operation"
+          az pipelines variable-group list --top 3 --query-order Asc --output table
+          echo "az pipelines variable-group show --group-id ${{ group_id }} -o json | jq -cr .variables.${{ env.variable }}.value"
+          data=$(az pipelines variable-group show --group-id ${{ group_id }} -o json | jq -cr .variables.${{ env.variable }}.value)
+          echo -e ${{ env.var_group }} "Contains Variable-${{ env.variable }} with value is \n" $data
+        env:
+          var_group: ${{ env.var_group }}
+          variable: ${{ env.variable }}
+        shell: bash
+
+  update_operation:
+    needs: choose_operation
+    runs-on: ubuntu-latest
+    if: env.OPERATION == 'update'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Restore setup.sh
+        uses: actions/download-artifact@v2
+        with:
+          name: setup-artifact
+          path: .
+
+      - name: Performing Update operation
+        run: |
+          source setup.sh
+          echo "Performing Update operation"
+          echo "az pipelines variable-group variable update --group-id ${{ group_id }} --name ${{ env.variable }} --value ${{ env.value }} --secret ${{ env.secret }} -o yaml"
+          az pipelines variable-group variable update --group-id ${{ group_id }} --name ${{ env.variable }} --value ${{ env.value }} --secret ${{ env.secret }} -o yaml
+        env:
+          group_id: ${{ group_id }}
+          variable: ${{ env.variable }}
+          value: ${{ env.value }}
+          secret: ${{ env.secret }}
+        shell: bash
+
+  delete_operation:
+    needs: choose_operation
+    runs-on: ubuntu-latest
+    if: env.OPERATION == 'delete'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Restore setup.sh
+        uses: actions/download-artifact@v2
+        with:
+          name: setup-artifact
+          path: .
+
+      - name: Performing Delete operation
+        run: |
+          source setup.sh
+          echo "Performing Delete operation"
+          echo "az pipelines variable-group variable delete --group-id ${{ group_id }} --name ${{ env.variable }} -y"
+          az pipelines variable-group variable delete --group-id ${{ group_id }} --name ${{ env.variable }} -y
+        env:
+          group_id: ${{ group_id }}
+          variable: ${{ env.variable }}
+        shell: bash
+
+  drop_operation:
+    needs: choose_operation
+    runs-on: ubuntu-latest
+    if: env.OPERATION == 'drop'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Restore setup.sh
+        uses: actions/download-artifact@v2
+        with:
+          name: setup-artifact
+          path: .
+
+      - name: Performing Drop operation
+        run: |
+          source setup.sh
+          echo "Performing Drop operation"
+          echo "az pipelines variable-group delete --group-id ${{ group_id }} -y"
+          az pipelines variable-group variable delete --group-id ${{ group_id }} -y
+        env:
+          group_id: ${{ group_id }}
+        shell: bash
