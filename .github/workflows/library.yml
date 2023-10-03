@@ -185,6 +185,6 @@ jobs:
         run: |
           source setup.sh
           echo "Performing Drop operation"
-          echo "az pipelines variable-group delete --group-id ${{ group_id }} -y"
+          echo "az pipelines variable-group delete --group-id ${group_id} -y"
           az pipelines variable-group variable delete --group-id ${group_id} -y
         shell: bash
