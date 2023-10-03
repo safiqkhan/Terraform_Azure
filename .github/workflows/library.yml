@@ -68,11 +68,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
 
-      - name: Restore setup.sh
-        uses: actions/download-artifact@v3.0.2
-        with:
-          name: setup-artifact
-          path: .
+      # - name: Restore setup.sh
+      #   uses: actions/download-artifact@v3.0.2
+      #   with:
+      #     name: setup-artifact
+      #     path: .
 
       - name: Performing Create operation
         run: |
