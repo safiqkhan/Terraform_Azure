@@ -43,7 +43,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
         with:
-          path: backend
+          dir: ./backend
       - name: Azure Login
         run: |
           az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
@@ -74,7 +74,7 @@ jobs:
     if: ${{ github.event.inputs.EXECLEVEL== 'plan' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4.1.0
 
       - name: Initialize Terraform
         run: |
@@ -90,7 +90,7 @@ jobs:
       - name: Validate Terraform Configuration
         run: terraform validate
       - name: Cache Terraform Plugin Folder
-        uses: actions/cache@v2
+        uses: actions/cache@v3.3.2
         with:
           path: .terraform # Specify the path to the Terraform plugin folder you want to cache
           key: ${{ runner.os }}-terraform-plugin-${{ hashFiles('**/.terraform/**') }}
@@ -101,9 +101,10 @@ jobs:
     if: ${{ github.event.inputs.EXECLEVEL== 'plan' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4.1.0
+        
       - name: Download Cached Terraform Plugin Folder
-        uses: actions/cache@v2
+        uses: actions/cache@v3.3.2
         with:
           path: .terraform  # Specify the path where you want to download the cached folder
           key: ${{ runner.os }}-terraform-plugin-${{ hashFiles('**/path/to/.terraform/**') }}
@@ -131,10 +132,10 @@ jobs:
           -var="resource_group_name=${{ inputs.RG_NAME }}" -out=terraform.tfplan
 
       - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: terraform-plan
-          path: terraform.tfplan
+          path: ./terraform.tfplan
 
   tfdeploy:
     runs-on: ubuntu-latest
