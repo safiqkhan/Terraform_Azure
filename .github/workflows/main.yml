@@ -53,13 +53,19 @@ jobs:
           terraform --version
           terraform init
           terraform validate
-          terraform plan -var="resource_group_name=${{ inputs.BE_RG_NAME }}" -var="location=${{ inputs.location }}" -var="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" -out=backend.tfplan
-          terraform apply backend.tfplan 
-
+          terraform plan -var="resource_group_name=${{ inputs.BE_RG_NAME }}-rg" -var="location=${{ inputs.location }}" -var="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" -out=backend.tfplan
         # env:
         #   TF_VAR_BE_RG_NAME: ${{ secrets.TF_VAR_BE_RG_NAME }}
         #   TF_VAR_BE_STORAGE_ACCOUNT: ${{ secrets.TF_VAR_BE_STORAGE_ACCOUNT }}
-
+      - name: import resources
+        run: |
+          terraform import azurerm_resource_group.rg "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg" || true
+          terraform import azurerm_storage_account.tfstate "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg/providers/Microsoft.Storage/storageAccounts/${ inputs.BE_STORAGE_ACCOUNT }" || true
+          terraform import azurerm_storage_container.tfstate "https://${{ inputs.BE_STORAGE_ACCOUNT}}:.blob.core.windows.net/tfstate" || true
+      - name: Setup Terraform Backend
+        continue-on-error: true
+        run: terraform apply backend.tfplan 
+        
       - name: Upload Terraform State
         uses: actions/upload-artifact@v2
         with:
@@ -80,7 +86,7 @@ jobs:
           terraform init \
           -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" \
           -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate" \
-          -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}" \
+          -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}-rg" \
           -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
           -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
           -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" \
