@@ -109,7 +109,7 @@ jobs:
           echo "Performing Read operation"
           az pipelines variable-group list --top 3 --query-order Asc --output table
           echo "az pipelines variable-group show --group-id ${group_id} -o json | jq -cr .variables.${variable}.value"
-          data=$(az pipelines variable-group show --group-id ${{ group_id }} -o json | jq -cr .variables.${variable}.value)
+          data=$(az pipelines variable-group show --group-id ${group_id} -o json | jq -cr .variables.${variable}.value)
           echo -e ${var_group} "Contains Variable-${variable} with value is \n" $data
           az devops logout || echo "az devops logout unsuccessful"
         env:
