@@ -158,7 +158,7 @@ tfdestroy:
       -backend-config="tenant_id=${AZURE_TENANT_ID}"
       -backend-config="client_id=${AZURE_APP_ID}"
       -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
-      - terraform destroy --auto-approve
+    - terraform destroy --auto-approve
     # - terraform destroy --target=module.${PLATFORM}_vm --auto-approve
 
   only:
