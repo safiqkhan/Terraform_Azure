@@ -13,17 +13,21 @@ on:
         - apply
         - destroy
       PLATFORM:
-        type: environment
+        type: string
         description: 'Select the OS type'
+        default: 'linux'
       RG_NAME: 
-        type: environment
+        type: string
         description: 'Select the RG Name'
+        default: 'Test'
       BE_RG_NAME: 
-        type: environment
+        type: string
         description: 'Select the BE_RG Name'
+        default: 'Backend'
       BE_STORAGE_ACCOUNT: 
-        type: environment
+        type: string
         description: 'Select the BE_STORAGE_ACCOUNT name'
+        default: 'safiqstoracc'
       Both_RG_Same:
         type: boolean
         description: True or False
