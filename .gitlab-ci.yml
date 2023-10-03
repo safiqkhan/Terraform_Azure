@@ -32,7 +32,6 @@ variables:
 
 setup_backend:
   stage: setup
-  allow_failure: true
   script:
     # - sudo apt-get update -y
     # - sudo apt-get install -y curl
@@ -49,13 +48,13 @@ setup_backend:
     - terraform validate
     - terraform import 
       azurerm_resource_group.rg
-      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${BE_RG_NAME}-rg" 
+      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${BE_RG_NAME}-rg" || true
     - terraform import
       azurerm_storage_account.tfstate 
-      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${BE_RG_NAME}-rg/providers/Microsoft.Storage/storageAccounts/${BE_STORAGE_ACCOUNT}"
+      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${BE_RG_NAME}-rg/providers/Microsoft.Storage/storageAccounts/${BE_STORAGE_ACCOUNT}" || true
     - terraform import
       azurerm_storage_container.tfstate 
-      "https://${BE_STORAGE_ACCOUNT}.blob.core.windows.net/tfstate"
+      "https://${BE_STORAGE_ACCOUNT}.blob.core.windows.net/tfstate" || true
     - terraform plan 
       -var="resource_group_name=${BE_RG_NAME}-rg" 
       -var="location=${location}" -var="storage_account_name=${BE_STORAGE_ACCOUNT}" 
@@ -64,6 +63,7 @@ setup_backend:
   only:
     variables:
       - $EXECLEVEL == "setup"
+  allow_failure: true
 
 tfvalidate:
   stage: tfvalidate
@@ -115,6 +115,7 @@ tfplan:
 
 tfdeploy:
   stage: tfdeploy
+  timeout: 16m
   script:
     - az login --service-principal
       -u ${AZURE_APP_ID} -p ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID}
@@ -129,7 +130,7 @@ tfdeploy:
       -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
     - terraform import
       azurerm_resource_group.rg
-      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}-rg"
+      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}-rg" || true
     - terraform apply
       --target=module.${TF_VAR_PLATFORM}_vm
       -var="resource_group_name=${RG_NAME}"
@@ -144,6 +145,7 @@ tfdeploy:
 
 tfdestroy:
   stage: tfdestroy
+  timeout: 7m
   script:
     - az login --service-principal
       -u ${AZURE_APP_ID} -p ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID}
