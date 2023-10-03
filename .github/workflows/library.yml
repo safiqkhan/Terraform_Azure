@@ -111,6 +111,7 @@ jobs:
           echo "az pipelines variable-group show --group-id ${group_id} -o json | jq -cr .variables.${variable}.value"
           data=$(az pipelines variable-group show --group-id ${{ group_id }} -o json | jq -cr .variables.${variable}.value)
           echo -e ${var_group} "Contains Variable-${variable} with value is \n" $data
+          az devops logout || echo "az devops logout unsuccessful"
         env:
           var_group: ${{ env.var_group }}
           variable: ${{ env.variable }}
@@ -137,7 +138,6 @@ jobs:
           echo "az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml"
           az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml
         env:
-          group_id: ${{ group_id }}
           variable: ${{ env.variable }}
           value: ${{ env.value }}
           secret: ${{ env.secret }}
@@ -164,7 +164,6 @@ jobs:
           echo "az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y"
           az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y
         env:
-          group_id: ${{ group_id }}
           variable: ${{ env.variable }}
         shell: bash
 
@@ -188,6 +187,4 @@ jobs:
           echo "Performing Drop operation"
           echo "az pipelines variable-group delete --group-id ${{ group_id }} -y"
           az pipelines variable-group variable delete --group-id ${group_id} -y
-        env:
-          group_id: ${{ group_id }}
         shell: bash
