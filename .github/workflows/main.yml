@@ -41,9 +41,9 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4.1.0
         with:
-          path: backend 
+          path: backend
       - name: Azure Login
         run: |
           az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
@@ -66,15 +66,7 @@ jobs:
           terraform import azurerm_storage_container.tfstate "https://${{ inputs.BE_STORAGE_ACCOUNT }}.blob.core.windows.net/tfstate" || true
       - name: apply Terraform
         continue-on-error: true
-        run: |
-          terraform apply backend.tfplan 
-        
-      - name: Upload Terraform State
-        uses: actions/upload-artifact@v2
-        with:
-          name: terraform-state
-          path: |
-            .terraform/
+        run: terraform apply backend.tfplan 
 
   tfvalidate:
     runs-on: ubuntu-latest
@@ -94,9 +86,14 @@ jobs:
           -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
           -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" \
           -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
-          
+
       - name: Validate Terraform Configuration
         run: terraform validate
+      - name: Cache Terraform Plugin Folder
+        uses: actions/cache@v2
+        with:
+          path: .terraform # Specify the path to the Terraform plugin folder you want to cache
+          key: ${{ runner.os }}-terraform-plugin-${{ hashFiles('**/.terraform/**') }}
 
   tfplan:
     runs-on: ubuntu-latest
@@ -105,7 +102,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        
+      - name: Download Cached Terraform Plugin Folder
+        uses: actions/cache@v2
+        with:
+          path: .terraform  # Specify the path where you want to download the cached folder
+          key: ${{ runner.os }}-terraform-plugin-${{ hashFiles('**/path/to/.terraform/**') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-plugin-
+
+      - name: Azure Login
+        run: |
+          az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Initialize Terraform
         run: |
           terraform init \
