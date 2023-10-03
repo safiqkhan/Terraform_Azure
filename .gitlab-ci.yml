@@ -40,7 +40,7 @@ setup_backend:
     # - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
     # - sudo apt-get update -y
     # - sudo apt-get install -y terraform
-    - az login --service-principal \
+    - az login --service-principal
       -u ${AZURE_APP_ID} -p ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID}
     - az account set --subscription ${AZURE_SUBSCRIPTION_ID}
     - terraform --version
@@ -68,7 +68,7 @@ setup_backend:
 tfvalidate:
   stage: tfvalidate
   script:
-    - az login --service-principal \
+    - az login --service-principal
       -u ${AZURE_APP_ID} -p ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID}
     - az account set --subscription ${AZURE_SUBSCRIPTION_ID}
     - terraform init 
@@ -90,7 +90,7 @@ tfplan:
   script:
     # - !reference [setup_backend, script]
     # - terraform init -backend-config="./backend.tfbackend
-    az login --service-principal \
+    az login --service-principal
     -u ${AZURE_APP_ID} -p ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID}
     az account set --subscription ${AZURE_SUBSCRIPTION_ID}
     - terraform init 
@@ -116,7 +116,7 @@ tfplan:
 tfdeploy:
   stage: tfdeploy
   script:
-    - az login --service-principal \
+    - az login --service-principal
       -u ${AZURE_APP_ID} -p ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID}
     - az account set --subscription ${AZURE_SUBSCRIPTION_ID}
     - terraform init 
@@ -145,7 +145,7 @@ tfdeploy:
 tfdestroy:
   stage: tfdestroy
   script:
-    - az login --service-principal \
+    - az login --service-principal
       -u ${AZURE_APP_ID} -p ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID}
     - az account set --subscription ${AZURE_SUBSCRIPTION_ID}
     - terraform init 
