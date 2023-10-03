@@ -43,7 +43,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
         with:
-          sparse-checkout: ./backend
+          repository: Safiquddin/Terraform_Azure
+          path: Terraform_Azure/backend
 
       - name: Setup Terraform Backend
         run: |
