@@ -17,13 +17,13 @@ variables:
       - "drop"
     description: "Enter Execution policy"
   var_group:
-    value: "Test"
+    value: "Group"
     description: "Enter Variable Group Name"
   variable:
-    value: "Name"
+    value: "Location"
     description: "Enter Variable Name"
   value:
-    value: "app"
+    value: "India"
     description: "Enter Value Value"
   secret:
     type: boolean
