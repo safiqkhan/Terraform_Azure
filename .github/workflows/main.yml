@@ -43,11 +43,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
         with:
-          dir: ./backend
-      - name: Azure Login
-        run: |
-          az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
-          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          sparse-checkout: ./backend
 
       - name: Setup Terraform Backend
         run: |
@@ -87,14 +83,6 @@ jobs:
           -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" \
           -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
 
-      - name: Validate Terraform Configuration
-        run: terraform validate
-      - name: Cache Terraform Plugin Folder
-        uses: actions/cache@v3.3.2
-        with:
-          path: .terraform # Specify the path to the Terraform plugin folder you want to cache
-          key: ${{ runner.os }}-terraform-plugin-${{ hashFiles('**/.terraform/**') }}
-
   tfplan:
     runs-on: ubuntu-latest
     needs: setup_backend
@@ -102,14 +90,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
-        
-      - name: Download Cached Terraform Plugin Folder
-        uses: actions/cache@v3.3.2
-        with:
-          path: .terraform  # Specify the path where you want to download the cached folder
-          key: ${{ runner.os }}-terraform-plugin-${{ hashFiles('**/path/to/.terraform/**') }}
-          restore-keys: |
-            ${{ runner.os }}-terraform-plugin-
 
       - name: Azure Login
         run: |
@@ -135,7 +115,7 @@ jobs:
         uses: actions/upload-artifact@v3.1.3
         with:
           name: terraform-plan
-          path: ./terraform.tfplan
+          path: "terraform.tfplan"
 
   tfdeploy:
     runs-on: ubuntu-latest
