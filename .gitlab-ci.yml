@@ -6,28 +6,29 @@ stages:
   - tfdestroy
 
 variables:
-  TF_VAR_EXECLEVEL:
-    value: "plan" # Default operation, can be overridden
-    options:
-      - "plan"
-      - "apply"
-      - "destroy"
-    description: "Enter Execution policy"  # Default operation, can be overridden
-  PLATFORM: 
-    value: "linux"
-    description: "Enter Platform"
-  RG_NAME:
-    value: "Test"
-    description: "Enter Resource Group"
-  location:
-    value: "Central India"
-    description: "Enter Resource Group Location"
-  BE_RG_NAME: 
-    value: "Backend"
-    description: "Enter Backedn Resource Group"
-  BE_STORAGE_ACCOUNT: 
-    value: "safiqstorageacc"
-    description: "Enter Backend Storage account name"
+    EXECLEVEL:
+        value: "plan" # Default operation, can be overridden
+        options:
+         - "setup"
+         - "plan"
+         - "apply"
+         - "destroy"
+        description: "Enter Execution policy"  # Default operation, can be overridden
+    PLATFORM: 
+        value: "linux"
+        description: "Enter Platform"
+    RG_NAME:
+        value: "Test"
+        description: "Enter Resource Group"
+    location:
+        value: "Central India"
+        description: "Enter Resource Group Location"
+    BE_RG_NAME: 
+        value: "Backend"
+        description: "Enter Backedn Resource Group"
+    BE_STORAGE_ACCOUNT: 
+        value: "safiqstorageacc"
+        description: "Enter Backend Storage account name"
 
 setup_backend:
   stage: setup
@@ -50,7 +51,10 @@ setup_backend:
       -var="resource_group_name=${BE_RG_NAME}-rg" 
       -var="location=${location}" -var="storage_account_name=${BE_STORAGE_ACCOUNT}" 
       -out=backend.tfplan
-    - terraform apply backend.tfplan 
+    - terraform apply backend.tfplan
+  only:
+    variables:
+      - $EXECLEVEL == "setup"
 
 tfvalidate:
   stage: tfvalidate
@@ -66,7 +70,7 @@ tfvalidate:
     - terraform validate 
   only:
     variables:
-      - $TF_VAR_EXECLEVEL == "plan"
+      - $EXECLEVEL == "plan"
   needs:
     - job: setup_backend
 tfplan:
@@ -82,8 +86,6 @@ tfplan:
       -backend-config="tenant_id=${AZURE_TENANT_ID}"
       -backend-config="client_id=${AZURE_APP_ID}"
       -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
-      -backend-config="resource_group_name=${BE_RG_NAME}" 
-      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
     - terraform plan
       --target=module.${PLATFORM}_vm
       -var="resource_group_name=${RG_NAME}"
@@ -96,7 +98,7 @@ tfplan:
     - job: tfvalidate
   only:
     variables:
-      - $TF_VAR_EXECLEVEL == "plan"
+      - $EXECLEVEL == "plan"
 
 tfdeploy:
   stage: tfdeploy
@@ -109,8 +111,6 @@ tfdeploy:
       -backend-config="tenant_id=${AZURE_TENANT_ID}"
       -backend-config="client_id=${AZURE_APP_ID}"
       -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
-      -backend-config="resource_group_name=${BE_RG_NAME}" 
-      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
     - terraform import
       azurerm_resource_group.rg
       "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}-rg"
@@ -121,10 +121,10 @@ tfdeploy:
       --auto-approve
   only:
     variables:
-      - $TF_VAR_EXECLEVEL == "apply"
+      - $EXECLEVEL == "apply"
   artifacts:
     paths:
-      - **/*.pem
+      - "*.pem"
 
 tfdestroy:
   stage: tfdestroy
@@ -137,9 +137,7 @@ tfdestroy:
       -backend-config="tenant_id=${AZURE_TENANT_ID}"
       -backend-config="client_id=${AZURE_APP_ID}"
       -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
-      -backend-config="resource_group_name=${BE_RG_NAME}" 
-      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
     - terraform destroy --target=module.${PLATFORM}_vm --auto-approve
   only:
     variables:
-      - $TF_VAR_EXECLEVEL == "destroy"
+      - $EXECLEVEL == "destroy"
