@@ -39,6 +39,7 @@ jobs:
         
           # az config set extension.use_dynamic_install=yes_without_prompt 
       - name: Set up environment
+        continue-on-error: true
         run: |
           echo "Selected operation ${{ inputs.OPERATION }}"
           az config set extension.use_dynamic_install=yes_without_prompt 
