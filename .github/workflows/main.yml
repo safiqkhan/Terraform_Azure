@@ -15,19 +15,15 @@ on:
       PLATFORM:
         type: environment
         description: 'Select the OS type'
-        required: true
       RG_NAME: 
         type: environment
-        description: 'Select the OS type'
-        required: true
+        description: 'Select the RG Name'
       BE_RG_NAME: 
         type: environment
-        description: 'Select the OS type'
-        required: true
+        description: 'Select the BE_RG Name'
       BE_STORAGE_ACCOUNT: 
         type: environment
-        description: 'Select the OS type'
-        required: true
+        description: 'Select the BE_STORAGE_ACCOUNT name'
       Both_RG_Same:
         type: boolean
         description: True or False
