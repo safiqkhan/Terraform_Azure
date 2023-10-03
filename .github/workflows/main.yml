@@ -111,9 +111,9 @@ jobs:
 
       - name: Create Terraform Plan
         run: |
-          terraform plan 
-          --target=module.${{ inputs.VAR_PLATFORM }}_vm 
-          -var="resource_group_name=${{ inputs.VAR_RG_NAME }}" -out=terraform.tfplan
+          terraform plan
+          --target=module.${{ inputs.PLATFORM }}_vm \
+          -var="resource_group_name=${{ inputs.RG_NAME }}" -out=terraform.tfplan
 
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v2
@@ -131,18 +131,24 @@ jobs:
 
       - name: Initialize Terraform
         run: |
-          terraform init 
-          -backend-config="resource_group_name=${{ inputs.VAR_BE_RG_NAME }}" 
-          -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}"
-
+          terraform init \
+          -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" \
+          -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate" \
+          -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}-rg" \
+          -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+          -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" \
+          -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
+      - name: import resources
+        run: |
+          terraform import \
+          azurerm_resource_group.rg \
+          "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ inputs.RG_NAME }}-rg"
       - name: Deploy Infrastructure
         run: |
-          terraform import 
-          azurerm_resource_group.rg 
-          "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ inputs.VAR_RG_NAME }}-rg"
-          terraform apply 
-          --target=module.${{ inputs.VAR_PLATFORM }}_vm 
-          -var="resource_group_name=${{ inputs.VAR_RG_NAME }}" --auto-approve
+          terraform apply \
+          --target=module.${{ inputs.PLATFORM }}_vm \
+          -var="resource_group_name=${{ inputs.RG_NAME }}" --auto-approve
 
   tfdestroy:
     runs-on: ubuntu-latest
@@ -157,13 +163,18 @@ jobs:
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Initialize Terraform
         run: |
-          terraform init 
-          -backend-config="resource_group_name=${{ inputs.VAR_BE_RG_NAME }}" 
-          -backend-config="storage_account_name=${{ inputs.VAR_BE_STORAGE_ACCOUNT }}"
+          terraform init \
+          -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" \
+          -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate" \
+          -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}-rg" \
+          -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+          -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" \
+          -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
 
       - name: Destroy Infrastructure
         run: |
-          terraform destroy --target=module.${{ env.TF_VAR_PLATFORM }}_vm --auto-approve
+          terraform destroy --target=module${{ inputs.PLATFORM }}_vm --auto-approve
 # GitHub self-hosted runner package- https://github.com/actions/runner/releases
 # ./config.sh --url https://github.com/yourusername/yourrepository --token YOUR-PAT --name NAME-OF-YOUR-RUNNER --work WORK-DIRECTORY
 # start the runner
