@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4.1.0
         
           # az config set extension.use_dynamic_install=yes_without_prompt 
       - name: Set up environment
@@ -52,7 +52,7 @@ jobs:
           echo "setup completed"
         env:
           AccessToken: ${{ secrets.ADOAccessToken }}
-          var_group: ${{ env.var_group }}
+          var_group: ${{ inputs.var_group }}
         shell: bash
 
       - name: Save setup.sh as artifact
@@ -86,10 +86,10 @@ jobs:
             az pipelines variable-group variable create --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o table
           fi
         env:
-          var_group: ${{ env.var_group }}
-          variable: ${{ env.variable }}
-          value: ${{ env.value }}
-          secret: ${{ env.secret }}
+          var_group: ${{ inputs.var_group }}
+          variable: ${{ inputs.variable }}
+          value: ${{ inputs.value }}
+          secret: ${{ inputs.secret }}
         shell: bash
 
   read_operation:
@@ -116,8 +116,8 @@ jobs:
           echo -e ${var_group} "Contains Variable-${variable} with value is \n" $data
           az devops logout || echo "az devops logout unsuccessful"
         env:
-          var_group: ${{ env.var_group }}
-          variable: ${{ env.variable }}
+          var_group: ${{ inputs.var_group }}
+          variable: ${{ inputs.variable }}
         shell: bash
 
   update_operation:
@@ -141,9 +141,9 @@ jobs:
           echo "az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml"
           az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml
         env:
-          variable: ${{ env.variable }}
-          value: ${{ env.value }}
-          secret: ${{ env.secret }}
+          variable: ${{ inputs.variable }}
+          value: ${{ inputs.value }}
+          secret: ${{ inputs.secret }}
         shell: bash
 
   delete_operation:
@@ -167,7 +167,7 @@ jobs:
           echo "az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y"
           az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y
         env:
-          variable: ${{ env.variable }}
+          variable: ${{ inputs.variable }}
         shell: bash
 
   drop_operation:
