@@ -85,6 +85,8 @@ jobs:
           terraform init 
           -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}" 
           -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}"
+          -backend-config="continer_name=tfstate"
+          -backend-config="key=terraform.tfstate"
 
       - name: Validate Terraform Configuration
         run: terraform validate
@@ -103,7 +105,11 @@ jobs:
 
       - name: Initialize Terraform
         run: |
-          terraform init -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}" -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}"
+          terraform init 
+          -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}" 
+          -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}"
+          -backend-config="continer_name=tfstate"
+          -backend-config="key=terraform.tfstate"
 
       - name: Create Terraform Plan
         run: |
