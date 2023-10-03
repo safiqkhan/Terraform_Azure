@@ -7,7 +7,7 @@ stages:
 
 variables:
     EXECLEVEL:
-        value: "setup" # Default operation, can be overridden
+        value: "apply" # Default operation, can be overridden
         options:
          - "setup"
          - "plan"
@@ -134,14 +134,14 @@ tfdeploy:
     - terraform apply
       --target=module.${TF_VAR_PLATFORM}_vm
       -var="resource_group_name=${RG_NAME}"
-      -var="location=$(location}"
+      -var="location=${location}"
       --auto-approve
   only:
     variables:
       - $EXECLEVEL == "apply"
   artifacts:
     paths:
-      - azurekey.pem
+      - "*.pem"
 
 tfdestroy:
   stage: tfdestroy
