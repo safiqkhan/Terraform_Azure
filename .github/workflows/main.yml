@@ -131,7 +131,6 @@ jobs:
     if: ${{ github.event.inputs.EXECLEVEL== 'apply' }}
     runs-on: ubuntu-latest
     timeout-minutes: 16
-    needs: tfplan
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -166,7 +165,6 @@ jobs:
     if: ${{ github.event.inputs.EXECLEVEL== 'destroy' }}
     runs-on: ubuntu-latest
     timeout-minutes: 7
-    needs: tfplan
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
