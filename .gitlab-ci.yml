@@ -1,5 +1,5 @@
 stages:
-  - setup
+  - backend
   - tfvalidate
   - tfplan
   - tfdeploy
@@ -7,7 +7,7 @@ stages:
 
 variables:
     EXECLEVEL:
-        value: "apply" # Default operation, can be overridden
+        value: "destroy" # Default operation, can be overridden
         options:
          - "setup"
          - "plan"
@@ -31,7 +31,7 @@ variables:
         description: "Enter Backend Storage account name"
 
 setup_backend:
-  stage: setup
+  stage: backend
   script:
     # - sudo apt-get update -y
     # - sudo apt-get install -y curl
