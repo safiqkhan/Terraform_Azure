@@ -8,17 +8,22 @@ on:
 jobs:
   setup_backend:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Setup Terraform Backend
+        continue-on-error: true
         run: |
+          cd backend
           terraform --version
           terraform init
           terraform validate
           terraform plan -out=backend.tfplan
           terraform import azurerm_resource_group.rg "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ env.TF_VAR_BE_RG_NAME }}-rg"
+          terraform import azurerm_storage_account.tfstate "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/Backend-rg/providers/Microsoft.Storage/storageAccounts/${TF_VAR_BE_STORAGE_ACCOUNT}"
+          terraform import azurerm_storage_container.tfstate "https://safiqstorageacc.blob.core.windows.net/tfstate"
           terraform apply -var="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" -var="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}" --auto-approve
 
         env:
@@ -29,7 +34,9 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: terraform-state
-          path: .terraform/ and terraform.tfstate
+          path: |
+            .terraform/
+            terraform.tfstate
 
   tfvalidate:
     runs-on: ubuntu-latest
@@ -39,7 +46,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Initialize Terraform
-        run: terraform init
+        run: terraform init 
 
       - name: Validate Terraform Configuration
         run: terraform validate
@@ -52,12 +59,16 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Initialize Terraform
-        run: terraform init -backend-config="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" -backend-config="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}"
+        run: |
+          terraform init 
+          -backend-config="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" 
+          -backend-config="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}"
 
       - name: Create Terraform Plan
         run: |
-          terraform plan --target=module.${{ env.TF_VAR_PLATFORM }}_vm -var="resource_group_name=${{ env.TF_VAR_RG_NAME }}" -out=terraform.tfplan
-          terraform import azurerm_resource_group.rg "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ env.TF_VAR_RG_NAME }}-rg"
+          terraform plan 
+          --target=module.${{ env.TF_VAR_PLATFORM }}_vm 
+          -var="resource_group_name=${{ env.TF_VAR_RG_NAME }}" -out=terraform.tfplan
 
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v2
@@ -73,12 +84,19 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Initialize Terraform
-        run: terraform init -backend-config="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" -backend-config="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}"
+        run: |
+          terraform init 
+          -backend-config="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" 
+          -backend-config="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}"
 
       - name: Deploy Infrastructure
         run: |
-          terraform import azurerm_resource_group.rg "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ env.TF_VAR_RG_NAME }}-rg"
-          terraform apply --target=module.${{ env.TF_VAR_PLATFORM }}_vm -var="resource_group_name=${{ env.TF_VAR_RG_NAME }}" --auto-approve
+          terraform import 
+          azurerm_resource_group.rg 
+          "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${{ env.TF_VAR_RG_NAME }}-rg"
+          terraform apply 
+          --target=module.${{ env.TF_VAR_PLATFORM }}_vm 
+          -var="resource_group_name=${{ env.TF_VAR_RG_NAME }}" --auto-approve
 
   tfdestroy:
     runs-on: ubuntu-latest
@@ -88,10 +106,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Initialize Terraform
-        run: terraform init -backend-config="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" -backend-config="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}"
+        run: |
+          terraform init 
+          -backend-config="resource_group_name=${{ env.TF_VAR_BE_RG_NAME }}" 
+          -backend-config="storage_account_name=${{ env.TF_VAR_BE_STORAGE_ACCOUNT }}"
 
       - name: Destroy Infrastructure
-        run: terraform destroy --target=module.${{ env.TF_VAR_PLATFORM }}_vm --auto-approve
+        run: |
+          terraform destroy --target=module.${{ env.TF_VAR_PLATFORM }}_vm --auto-approve
 # GitHub self-hosted runner package- https://github.com/actions/runner/releases
 # ./config.sh --url https://github.com/yourusername/yourrepository --token YOUR-PAT --name NAME-OF-YOUR-RUNNER --work WORK-DIRECTORY
 # start the runner
