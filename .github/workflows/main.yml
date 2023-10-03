@@ -164,6 +164,8 @@ jobs:
           name: my-artifact  # Name for the artifact (choose a meaningful name)
           path: |
             **/*.pem
+          retention-days: 5
+          if-no-files-found: warn
   tfdestroy:
     if: ${{ github.event.inputs.EXECLEVEL== 'destroy' }}
     runs-on: ubuntu-latest
