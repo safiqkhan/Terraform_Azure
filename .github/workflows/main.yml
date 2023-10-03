@@ -3,8 +3,8 @@ name: Terraform Pipeline
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        type: EXECLEVEL  
+      EXECLEVEL:
+        type: choice
         description: 'Enter Execution policy'
         required: true
         default: 'plan'
@@ -13,15 +13,28 @@ on:
         - apply
         - destroy
       PLATFORM:
-        type: environment
+        type: choice
         description: 'Select the OS type'
         default: 'linux'
         required: true
-      RG_NAME: 'Test'
-      BE_RG_NAME: 'Backend'
-      BE_STORAGE_ACCOUNT: 'safiqstoragacc'
-
-
+      RG_NAME: 
+        type: environment
+        description: 'Select the OS type'
+        default: 'TEST'
+        required: true
+      BE_RG_NAME: 
+        type: environment
+        description: 'Select the OS type'
+        default: 'Backend'
+        required: true
+      BE_STORAGE_ACCOUNT: 
+        type: environment
+        description: 'Select the OS type'
+        default: 'safiqstoragacc'
+        required: true
+      Both_RG_Same:
+        type: boolean
+        description: True or False
 jobs:
   setup_backend:
     runs-on: ubuntu-latest
