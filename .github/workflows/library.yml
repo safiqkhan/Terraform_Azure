@@ -36,10 +36,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
+        
+          # az config set extension.use_dynamic_install=yes_without_prompt 
       - name: Set up environment
         run: |
-          az config set extension.use_dynamic_install=yes_without_prompt 
           echo "Selected operation ${{ env.OPERATION }}"
           echo "az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop" > setup.sh
           az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop
@@ -87,7 +87,6 @@ jobs:
           variable: ${{ env.variable }}
           value: ${{ env.value }}
           secret: ${{ env.secret }}
-        shell: bash
 
   read_operation:
     needs: choose_operation
