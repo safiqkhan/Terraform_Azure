@@ -42,7 +42,6 @@ jobs:
         continue-on-error: true
         run: |
           echo "Selected operation ${{ inputs.OPERATION }}"
-          az config set extension.use_dynamic_install=yes_without_prompt 
           echo "az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop" > setup.sh
           az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop
           echo "export AZURE_DEVOPS_EXT_PAT=${AccessToken}" >> setup.sh
