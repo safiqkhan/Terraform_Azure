@@ -54,7 +54,7 @@ jobs:
           terraform init
           terraform validate
           terraform plan -var="resource_group_name=${{ inputs.BE_RG_NAME }}" -var="location=${{ inputs.location }}" -var="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" -out=backend.tfplan
-          terraform apply backend.tfplan --auto-approve
+          terraform apply backend.tfplan 
 
         # env:
         #   TF_VAR_BE_RG_NAME: ${{ secrets.TF_VAR_BE_RG_NAME }}
