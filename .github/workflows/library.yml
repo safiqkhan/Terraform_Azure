@@ -170,7 +170,7 @@ jobs:
   drop_operation:
     needs: choose_operation
     runs-on: ubuntu-latest
-    if: env.OPERATION == 'drop'
+    if: inputs.OPERATION== 'drop'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.0
