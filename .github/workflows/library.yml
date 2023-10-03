@@ -39,6 +39,7 @@ jobs:
 
       - name: Set up environment
         run: |
+          az config set extension.use_dynamic_install=yes_without_prompt 
           echo "Selected operation ${{ env.OPERATION }}"
           echo "az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop" > setup.sh
           az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop
