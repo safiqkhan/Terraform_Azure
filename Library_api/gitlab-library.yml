@@ -26,10 +26,8 @@ variables:
     value: "app"
     description: "Enter Value Value"
   secret:
+    type: boolean
     value: "false"
-    options:
-      - "false"
-      - "true"
     description: "Is Secret"
 choose_operation:
   stage: choose
