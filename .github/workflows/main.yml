@@ -38,7 +38,7 @@ on:
         description: True or False
 jobs:
   setup_backend:
-    if: ${{ github.event.inputs.EXECLEVEL== 'plan' }}
+    if: ${{ github.event.inputs.EXECLEVEL== 'backend' }}
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
