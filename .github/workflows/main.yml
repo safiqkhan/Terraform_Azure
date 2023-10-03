@@ -47,16 +47,15 @@ jobs:
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform Backend
-        continue-on-error: true
         run: |
           cd backend
           terraform --version
           terraform init
           terraform validate
           terraform plan -var="resource_group_name=${{ inputs.BE_RG_NAME }}" -var="location=${{ inputs.location }}" -var="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" -out=backend.tfplan
-          terraform import azurerm_resource_group.rg "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg" || true
-          terraform import azurerm_storage_account.tfstate "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg/providers/Microsoft.Storage/storageAccounts/${ inputs.BE_STORAGE_ACCOUNT }" || true
-          terraform import azurerm_storage_container.tfstate "https://${{ inputs.BE_STORAGE_ACCOUNT}}:.blob.core.windows.net/tfstate" || true
+          terraform import azurerm_resource_group.rg "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg" 2>/dev/null
+          terraform import azurerm_storage_account.tfstate "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ inputs.BE_RG_NAME }}-rg/providers/Microsoft.Storage/storageAccounts/${ inputs.BE_STORAGE_ACCOUNT }" 2>/dev/null
+          terraform import azurerm_storage_container.tfstate "https://${{ inputs.BE_STORAGE_ACCOUNT}}:.blob.core.windows.net/tfstate" 2>/dev/null
           terraform apply "backend.tfplan" --auto-approve
 
         # env:
@@ -83,7 +82,14 @@ jobs:
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Initialize Terraform
         run: |
-          terraform init -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate" -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}" -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
+          terraform init 
+          -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" 
+          -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate" 
+          -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}" 
+          -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" 
+          -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" 
+          -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" 
+          -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
           
       - name: Validate Terraform Configuration
         run: terraform validate
@@ -100,14 +106,7 @@ jobs:
           az login --service-principal -u ${{ secrets.AZURE_APP_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Initialize Terraform
-        run: |
-          terraform init \
-          -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}" \
-          -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}"
-          -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
-          -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
-          -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" \
-          -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
+        run: terraform init -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate" -backend-config="resource_group_name=${{ inputs.BE_RG_NAME }}" -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
 
       - name: Create Terraform Plan
         run: |
