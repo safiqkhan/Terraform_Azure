@@ -17,15 +17,15 @@ on:
       var_group:
         type: string
         description: 'Enter Variable Group Name'
-        default: 'Test'
+        default: 'Group'
       variable:
         type: string
         description: 'Enter Variable Name'
-        default: 'Name'
+        default: 'Location'
       value:
         type: string
         description: 'Enter Value here'
-        default: 'app'
+        default: 'India'
       secret:
          type: boolean
          description: 'Is Secret'
