@@ -13,97 +13,133 @@ variables:
       - "apply"
       - "destroy"
     description: "Enter Execution policy"  # Default operation, can be overridden
-  TF_VAR_PLATFORM: 
+  PLATFORM: 
     value: "linux"
     description: "Enter Platform"
-  TF_VAR_RG_NAME:
+  RG_NAME:
     value: "Test"
     description: "Enter Resource Group"
-  TF_VAR_BE_RG_NAME: 
+  location:
+    value: "Central India"
+    description: "Enter Resource Group Location"
+  BE_RG_NAME: 
     value: "Backend"
     description: "Enter Backedn Resource Group"
-  TF_VAR_BE_STORAGE_ACCOUNT: 
+  BE_STORAGE_ACCOUNT: 
     value: "safiqstorageacc"
-    description: "Enter Backedn Storage account name"
+    description: "Enter Backend Storage account name"
 
 setup_backend:
   stage: setup
+  allow_failure: true
   script:
-    # - cd backend
+    - cd backend
     - terraform --version
     - terraform init
     - terraform validate
-    - terraform plan -out=backend.tfplan
     - terraform import 
       azurerm_resource_group.rg
-      "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${TF_VAR_BE_RG_NAME}-rg"
+      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${BE_RG_NAME}-rg" 
     - terraform import
       azurerm_storage_account.tfstate 
-      "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/Backend-rg/providers/Microsoft.Storage/storageAccounts/${TF_VAR_BE_STORAGE_ACCOUNT}"
+      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${BE_RG_NAME}-rg/providers/Microsoft.Storage/storageAccounts/${BE_STORAGE_ACCOUNT}"
     - terraform import
       azurerm_storage_container.tfstate 
-      "https://safiqstorageacc.blob.core.windows.net/tfstate"
-    - terraform apply
-      -var="resource_group_name=${TF_VAR_BE_RG_NAME}"
-      -var="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}" --auto-approve
-    # - terraform init -backend-config="./backend.tfbackend
-  allow_failure: true
-  artifacts:
-    paths:
-      - .terraform/
-      - terraform.tfstate
+      "https://${BE_STORAGE_ACCOUNT}.blob.core.windows.net/tfstate"
+    - terraform plan 
+      -var="resource_group_name=${BE_RG_NAME}-rg" 
+      -var="location=${location}" -var="storage_account_name=${BE_STORAGE_ACCOUNT}" 
+      -out=backend.tfplan
+    - terraform apply backend.tfplan 
 
 tfvalidate:
   stage: tfvalidate
   script:
-    - terraform init
+    - terraform init 
+      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
+      -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate"
+      -backend-config="resource_group_name=${BE_RG_NAME}-rg"
+      -backend-config="subscription_id=${AZURE_SUBSCRIPTION_ID}"
+      -backend-config="tenant_id=${AZURE_TENANT_ID}"
+      -backend-config="client_id=${AZURE_APP_ID}"
+      -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
     - terraform validate 
   only:
     variables:
       - $TF_VAR_EXECLEVEL == "plan"
-
+  needs:
+    - job: setup_backend
 tfplan:
   stage: tfplan
   script:
     # - !reference [setup_backend, script]
+    # - terraform init -backend-config="./backend.tfbackend
     - terraform init 
-     -backend-config="resource_group_name=${TF_VAR_BE_RG_NAME}" 
-     -backend-config="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}"
+      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
+      -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate"
+      -backend-config="resource_group_name=${BE_RG_NAME}-rg"
+      -backend-config="subscription_id=${AZURE_SUBSCRIPTION_ID}"
+      -backend-config="tenant_id=${AZURE_TENANT_ID}"
+      -backend-config="client_id=${AZURE_APP_ID}"
+      -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
+      -backend-config="resource_group_name=${BE_RG_NAME}" 
+      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
     - terraform plan
-      --target=module.${TF_VAR_PLATFORM}_vm
-      -var="resource_group_name=${TF_VAR_RG_NAME}"
+      --target=module.${PLATFORM}_vm
+      -var="resource_group_name=${RG_NAME}"
+      -var="location=$(location}
       -out=terraform.tfplan
-  only:
-    variables:
-      - $TF_VAR_EXECLEVEL == "plan"
   artifacts:
     paths:
       - terraform.tfplan
   needs:
     - job: tfvalidate
+  only:
+    variables:
+      - $TF_VAR_EXECLEVEL == "plan"
 
 tfdeploy:
   stage: tfdeploy
   script:
     - terraform init 
-     -backend-config="resource_group_name=${TF_VAR_BE_RG_NAME}" 
-     -backend-config="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}"
+      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
+      -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate"
+      -backend-config="resource_group_name=${BE_RG_NAME}-rg"
+      -backend-config="subscription_id=${AZURE_SUBSCRIPTION_ID}"
+      -backend-config="tenant_id=${AZURE_TENANT_ID}"
+      -backend-config="client_id=${AZURE_APP_ID}"
+      -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
+      -backend-config="resource_group_name=${BE_RG_NAME}" 
+      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
     - terraform import
       azurerm_resource_group.rg
-      "/subscriptions/3bc9efe9-3af6-45ac-93a2-a2901d8838ae/resourceGroups/${TF_VAR_RG_NAME}-rg"
+      "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}-rg"
     - terraform apply
       --target=module.${TF_VAR_PLATFORM}_vm
-      -var="resource_group_name=${TF_VAR_RG_NAME}"
+      -var="resource_group_name=${RG_NAME}"
+      -var="location=$(location}"
       --auto-approve
   only:
     variables:
       - $TF_VAR_EXECLEVEL == "apply"
+  artifacts:
+    paths:
+      - **/*.pem
 
 tfdestroy:
   stage: tfdestroy
   script:
-    - terraform init -backend-config="resource_group_name=${TF_VAR_BE_RG_NAME}" -backend-config="storage_account_name=${TF_VAR_BE_STORAGE_ACCOUNT}"
-    - terraform destroy --target=module.${TF_VAR_PLATFORM}_vm --auto-approve
+    - terraform init 
+      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
+      -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate"
+      -backend-config="resource_group_name=${BE_RG_NAME}-rg"
+      -backend-config="subscription_id=${AZURE_SUBSCRIPTION_ID}"
+      -backend-config="tenant_id=${AZURE_TENANT_ID}"
+      -backend-config="client_id=${AZURE_APP_ID}"
+      -backend-config="client_secret=${AZURE_CLIENT_SECRET}"
+      -backend-config="resource_group_name=${BE_RG_NAME}" 
+      -backend-config="storage_account_name=${BE_STORAGE_ACCOUNT}"
+    - terraform destroy --target=module.${PLATFORM}_vm --auto-approve
   only:
     variables:
       - $TF_VAR_EXECLEVEL == "destroy"
