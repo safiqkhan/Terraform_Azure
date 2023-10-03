@@ -3,7 +3,7 @@ name: Terraform Pipeline
 on:
   push:
     branches:
-      - main  # Specify the branch you want to trigger this pipeline on
+      - master # Specify the branch you want to trigger this pipeline on
 
 jobs:
   setup_backend:
