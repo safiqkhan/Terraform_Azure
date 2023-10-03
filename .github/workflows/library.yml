@@ -48,6 +48,7 @@ jobs:
           export AZURE_DEVOPS_EXT_PAT="${AccessToken}"
           group_id=$(az pipelines variable-group list --query "[?name=='${var_group}'].id" -o tsv)
           echo "group_id=${group_id}" >> setup.sh
+          echo "setup completed"
         env:
           AccessToken: ${{ secrets.ADOAccessToken }}
           var_group: ${{ env.var_group }}
