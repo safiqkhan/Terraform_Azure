@@ -132,7 +132,7 @@ tfdeploy:
       azurerm_resource_group.rg
       "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}-rg" || true
     - terraform apply
-      --target=module.${TF_VAR_PLATFORM}_vm
+      --target=module.${PLATFORM}_vm
       -var="resource_group_name=${RG_NAME}"
       -var="location=${location}"
       --auto-approve
