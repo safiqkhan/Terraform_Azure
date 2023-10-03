@@ -71,7 +71,14 @@ jobs:
           -var="resource_group_name=${{ inputs.BE_RG_NAME }}-rg" \
           -var="location=${{ inputs.location }}" -var="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" \
           -out=backend.tfplan
-          terraform apply backend.tfplan 
+          terraform apply backend.tfplan
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: terraform-state
+          path: |
+           .terraform/
+           terraform.tfstate
 
   tfvalidate:
     runs-on: ubuntu-latest
