@@ -35,6 +35,10 @@ on:
       Both_RG_Same:
         type: boolean
         description: True or False
+ # fetch data only for Azure/login@v1.4.6
+permissions:
+  id-token: write
+  contents: read
 jobs:
   setup_backend:
     if: ${{ github.event.inputs.EXECLEVEL== 'backend' }}
