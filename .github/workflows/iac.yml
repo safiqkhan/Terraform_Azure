@@ -84,6 +84,7 @@ jobs:
           path: |
            .terraform/
            terraform.tfstate
+           backend.tfplan
 
   tfvalidate:
     runs-on: ubuntu-latest
@@ -95,6 +96,7 @@ jobs:
 
       - name: Initialize Terraform
         run: |
+          terraform --version
           terraform init \
           -backend-config="storage_account_name=${{ inputs.BE_STORAGE_ACCOUNT }}" \
           -backend-config="container_name=tfstate" -backend-config="key=terraform.tfstate" \
@@ -103,6 +105,10 @@ jobs:
           -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
           -backend-config="client_id=${{ secrets.AZURE_APP_ID }}" \
           -backend-config="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}"
+      - name: Validate the Terraform scripts
+        run: |
+          pwd
+          terraform validate
 
   tfplan:
     if: ${{ github.event.inputs.EXECLEVEL== 'plan' }}
@@ -133,11 +139,6 @@ jobs:
           -var="resource_group_name=${{ inputs.RG_NAME }}" -var="location=${{ inputs.location }}" \
           -out=terraform.tfplan
 
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: terraform-plan
-          path: |
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v3.1.3
         with:
