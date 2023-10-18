@@ -32,9 +32,6 @@ on:
         type: string
         description: 'Select the BE_STORAGE_ACCOUNT name'
         default: 'safiqstoracc'
-      Both_RG_Same:
-        type: boolean
-        description: True or False
  # fetch data only for Azure/login@v1.4.6
 permissions:
   id-token: write
