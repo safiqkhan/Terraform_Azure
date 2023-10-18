@@ -30,12 +30,7 @@ log "Gitlab ${password}"
 log "installing Gitlab-runner"
 sudo curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash
 sudo apt install -y gitlab-runner
-# gitlab-runner register \
-#   --non-interactive \
-#   --url http://$public_ip \
-#   --registration-token "YOUR_REGISTRATION_TOKEN" \
-#   --executor "shell" \
-#   --name "My Runner Name"
+# sudo gitlab-runner register --non-interactive --url "http://$public_ip" -r "BhcH8zQxuzwL46aPxidz" --executor "shell" --name "Runner_Name"
 log "Start the gitlab service"
 sudo gitlab-ctl start
 sudo gitlab-ctl status
