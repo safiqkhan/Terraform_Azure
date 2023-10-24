@@ -124,9 +124,10 @@ delete_operation:
   script:
     - |
       source setup.sh
-      echo "Performing Delete operation";
-      echo "az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y"
-      az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y
+      echo "Performing Update operation"
+      echo "az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml"
+      az pipelines variable-group variable update --group-id ${group_id} \
+      --name ${variable} --value ${value} --secret ${secret} -o yaml
   only:
     variables:
       - $OPERATION == "delete"        
