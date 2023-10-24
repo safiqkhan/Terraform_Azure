@@ -41,6 +41,16 @@ setup_environment:
   stage: setup
   script:
     - |
+setup_environment:
+  stage: setup
+  script:
+    - |
+      if ! command -v az &> /dev/null; then
+        echo "Azure CLI is not installed. Installing..."
+        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+      else
+        echo "Azure CLI is already installed."
+      fi
       az config set extension.use_dynamic_install=yes_without_prompt 
       echo "az devops configure -d organization=https://dev.azure.com/safiquddinkhan \
       project=onestop" >> setup.sh
@@ -100,11 +110,9 @@ update_operation:
   script:
     - |
       source setup.sh
-      echo "Performing Update operation";
-      echo "az pipelines variable-group variable update --group-id ${group_id} \
-      --name ${variable} --value ${value} --secret ${secret} -o yaml"
-      az pipelines variable-group variable update --group-id ${group_id} \
-      --name ${variable} --value ${value} --secret ${secret} -o yaml
+      echo "Performing Delete operation"
+      echo "az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y"
+      az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y
   only:
     variables:
       - $OPERATION == "update"  
@@ -130,9 +138,9 @@ drop_operation:
   script:
     - |
       source setup.sh
-      echo "Performing Drop operation";
+      echo "Performing Drop operation"
       echo "az pipelines variable-group delete --group-id ${group_id} -y"
-      az pipelines variable-group variable delete --group-id ${group_id} -y
+      az pipelines variable-group delete --group-id ${group_id} -y
   only:
     variables:
       - $OPERATION == "drop"
