@@ -1,86 +1,159 @@
-stages:
-  - choose_operation
-  - execute_operation
+include:
+  - project: 'ubs-ag/gt/ise/identity-and-access-management/agnes/agnes-infra/agnes-common-ci'
+    ref: Release
+    file:
+      - 'pipeline-fragments/common/set-environment.yml'
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE =="web" || $CI_PIPELINE_SOURCE =="trigger" || $CI_PIPELINE_SOURCE =="pipeline"'
+
 variables:
+  ENV: 
+   value: "dev"
+   description: "Environment where Function App will be deployed. Can either be dev or te1"
+
   OPERATION:
-    value: "create" # Default operation, can be overridden
-    options:
-      - "create"
-      - "read"
-      - "update"
-      - "delete"
-      - "drop"
-    description: "Enter Execution policy"
+    value: "read" # Default operation, can be overridden
+    options: ["create", "read", "update", "delete", "drop"]
+    description: "Choose Execution policy"
+
   var_group:
-    value: "Test"
+    value: "azure-app-service-plan-ENV"
     description: "Enter Variable Group Name"
+
   variable:
-    value: "Name"
+    value: "subscriptionId"
     description: "Enter Variable Name"
+
   value:
-    value: "app"
+    value: "dl5vtt4ss5xdw2jm6"
     description: "Enter Value Value"
+
   secret:
     value: "false"
-    options:
-      - "false"
-      - "true"
-    description: "Is Secret"
+    options: ["false", "true"]
+    description: "Is Secret?"
 
-choose_operation:
-  stage: choose_operation
-  script:
-    - echo "Selected operation $OPERATION"
-  only:
-    - main
-execute_operation:
-  stage: execute_operation
+  AZCLICOMMAND:
+    description: "Enter az cli command to execute" 
+    value: |
+     az
+     az --help
+     
+stages:
+  - set-environment
+  - fetch
+  - execute
+
+set-environment:  
+  stage: set-environment
+  extends: .set-environment
+  script:  
+    - !reference [.set-environment, script]
+
+# install jsonquery - sudo apt install -y jq
+# gr_id=$(az pipelines variable-group list --group-name ${var_group} --output table | awk '{ print $1}' | tail -1)
+crud_operation:
+  stage: fetch
+  image: container-registry.ubs.net/azure-cli:2.55.0
+  tags:
+    - kubernetes
   script:
     - |
+      az --version || { echo "Azure CLI not Found, Installing..."; curl -sL https://aka.ms/InstallAzureCLIDeb | bash; } || { echo "Failed to install Azure CLI"; exit 1; }
       az config set extension.use_dynamic_install=yes_without_prompt
-      az devops configure -d organization=https://dev.azure.com/safiquddinkhan project=onestop
-      export AZURE_DEVOPS_EXT_PAT="${AccessToken}" 
+      if az extension add --name azure-devops 2> /dev/null; then
+        echo "azure-devops extension added successfully"
+      elif [ -d ".azure/cliextensions/azure-devops/" ]; then
+        mkdir -p /root/.azure/cliextensions/azure-devops
+        cp -rf .azure/cliextensions/azure-devops/* /root/.azure/cliextensions/azure-devops/
+        az extension add --name azure-devops || az extension add --source .azure/cliextensions/azure-devops/azure_devops-0.26.0-py2.py3-none-any.whl
+      else
+        echo "couldn't install azure-devops due to absence of extension"
+      fi
+      az devops configure -d organization=https://dev.azure.com/ADO-ISE project=AA46136-AGNES
+      echo "az devops configure -d organization=https://dev.azure.com/ADO-ISE project=AA46136-AGNES"
+      echo "export AZURE_DEVOPS_EXT_PAT=${AccessToken}"
+      export AZURE_DEVOPS_EXT_PAT="${AccessToken}"
       group_id=$(az pipelines variable-group list --query "[?name=='${var_group}'].id" -o tsv)
+      echo "group_id=${group_id}" 
       if [ "$OPERATION" == "create" ]; then
+        echo "***** Performing Create operation of ${variable}*****"
         if [ -z "$group_id" ]; then
-          echo "az pipelines variable-group create --authorize true --name ${var_group} \
-          --description 'Variables for my Variable group' --variables ${variable}=${value} -o yaml"
-          az pipelines variable-group create --authorize true --name ${var_group} \
-          --description "Variables for my Variable group" --variables ${variable}=${value} -o yaml
+          echo "az pipelines variable-group create --authorize false --name ${var_group} --description 'Variables for my Variable group' --variables ${variable}=${value} -o json"
+          az pipelines variable-group create --authorize false --name ${var_group} --description "Variables for my Variable group" --variables ${variable}=${value} -o json
         else
-          echo "az pipelines variable-group variable create --id ${group_id} \
-          --name ${variable} --value ${value} --secret ${secret} -o table"
-          az pipelines variable-group variable create --id ${group_id} --name ${variable} \
-          --value ${value} --secret ${secret} -o table
+          echo "az pipelines variable-group variable create --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml"
+          az pipelines variable-group variable create --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml
         fi
       elif [ "$OPERATION" == "read" ]; then
-        echo "group id= ${group_id}"
-        az pipelines variable-group list --top 3 --query-order Asc -o table
-        data=$(az pipelines variable-group show --id ${group_id} -o json | jq -cr \
-        .variables.${variable}.value)
-        echo "az pipelines variable-group show --id ${group_id} -o json | jq -cr \
-        .variables.${variable}.value)"
-        echo -e ${var_group} "Conatins Variable-"${variable} "with value is \n"$data
+        echo "***** Performing Read operation of ${variable}*****"
+        az pipelines variable-group list --top 3 --query "[].{ID:id, Name:name, Description:description, Variables:variables | length(@), ModifiedDate:lastModifiedDate}" -o table
+        data=$(az pipelines variable-group show --group-id ${group_id} --query "variables.${variable}.value")
+        #data=$(az pipelines variable-group show --group-id ${group_id} -o json | jq -cr .variables.${variable}.value
+        if [ -z $data ]; then
+          az pipelines variable-group show --group-id ${group_id} -o yaml
+          echo "${variable} not found, All Varibales are for ${var_group} mentioed above"
+        else
+          echo "Group: ${var_group}, Variable: ${variable}, Value: ${data}"
+          echo "data=${data}" >> build.env
+        fi
       elif [ "$OPERATION" == "update" ]; then
-        echo "az pipelines variable-group variable update --id ${group_id} --name ${variable} \
-        --value ${value} --secret ${secret} -o yaml"
-        #use --new-name for change the name of the variable.
-        az pipelines variable-group variable update --id ${group_id} --name ${variable} \
-        --value ${value} --secret ${secret} -o yaml
+        echo "***** Performing Update operation for ${variable}*****"
+        echo "az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml"
+        az pipelines variable-group variable update --group-id ${group_id} --name ${variable} --value ${value} --secret ${secret} -o yaml
       elif [ "$OPERATION" == "delete" ]; then
-        echo "az pipelines variable-group variable delete --id ${group_id} \
-        --name ${variable} -y"
-        az pipelines variable-group variable delete --id ${group_id} --name ${variable} -y
+        echo "***** Performing Delete operation for Variable*****"
+        echo "az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y"
+        az pipelines variable-group variable delete --group-id ${group_id} --name ${variable} -y
       elif [ "$OPERATION" == "drop" ]; then
-        echo "az pipelines variable-group delete --id ${group_id} -y"
-        az pipelines variable-group delete --id ${group_id} -y
+        echo "***** Performing DROP operation for ${var_group}*****"
+        echo "az pipelines variable-group delete --group-id ${group_id} -y"
+        az pipelines variable-group delete --group-id ${group_id} -y
+        echo "Group - ${var_group} Deleted successfully."
       else
         echo "Invalid operation selected" 
         exit 1
       fi
       az devops logout || echo "az devops logout unsuccessful"
       # If previously az login then az devops logout
-  only:
-    - main
-  needs: # previous stage to succeed before it can run.
-    - job: choose_operation 
+  artifacts:
+    paths:
+      - build.env
+
+execute_operation:
+  stage: execute
+  image: container-registry.ubs.net/azure-cli:2.55.0
+  tags:
+    - kubernetes
+  before_script:
+    - !reference [.source-files,before_script]
+  rules:
+    - if: '$AZCLICOMMAND !="az" && $ENV == "dev"'
+      variables:
+        VAULT_NAMESPACE: "AT42942"
+        VAULT_AUTH_ROLE: "gl_dev_at42942"
+        VAULT_SERVER_URL: "https://vault.eu.eva.ubsdev.net"
+        VAULT_PATH: "SVC_DEV_AT42942_deploy"
+    - if: '$AZCLICOMMAND !="az" && $ENV == "te1"'
+      variables:
+        VAULT_NAMESPACE: "AT43363"
+        VAULT_AUTH_ROLE: "gl_test_at43363"
+        VAULT_SERVER_URL: "https://vault.eu.eva.ubsdev.net"
+        VAULT_PATH: "SVC_TEST_AT43363_deploy"
+  secrets:
+    deploy_spn_password:
+        vault: "deploy/aad/${VAULT_PATH}/secret@secret"
+        file: false
+  script:
+    - source build.env
+    - az login --service-principal --username $SP_APP_ID --password $deploy_spn_password --tenant $SP_TENANT_ID
+    - az account set --subscription $SUBSCRIPTION
+    - echo "${AZCLICOMMAND}"
+    - echo ${data}
+    - eval "$AZCLICOMMAND"
+  artifacts: 
+    reports: 
+      dotenv: build.env
+      
