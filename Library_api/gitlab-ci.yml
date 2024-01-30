@@ -1,5 +1,5 @@
 include:
-  - project: 'ubs-ag/gt/ise/identity-and-access-management/agnes/agnes-infra/agnes-common-ci'
+  - project: 'path/to/common-ci'
     ref: Release
     file:
       - 'pipeline-fragments/common/set-environment.yml'
@@ -56,7 +56,7 @@ set-environment:
 # gr_id=$(az pipelines variable-group list --group-name ${var_group} --output table | awk '{ print $1}' | tail -1)
 crud_operation:
   stage: fetch
-  image: container-registry.ubs.net/azure-cli:2.55.0
+  image: container-registry.dom.net/azure-cli:2.55.0
   tags:
     - kubernetes
   script:
@@ -124,7 +124,7 @@ crud_operation:
 
 execute_operation:
   stage: execute
-  image: container-registry.ubs.net/azure-cli:2.55.0
+  image: container-registry.dom.net/azure-cli:2.55.0
   tags:
     - kubernetes
   before_script:
